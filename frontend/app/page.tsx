@@ -170,7 +170,7 @@ export default function Home() {
                 .map(name => ({ name, data: sheets[name] }))
                 .find(({ data }) => data?.type === 'table' && data?.data && data.data.length > 0);
               
-              if (tableSheet) {
+              if (tableSheet && tableSheet.data.data) {
                 return <DonationChart data={tableSheet.data.data} />;
               }
               
