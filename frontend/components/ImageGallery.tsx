@@ -3,6 +3,8 @@
 import React from 'react';
 import { getImageUrl } from '@/services/api';
 
+/* eslint-disable @next/next/no-img-element */
+
 interface ImageGalleryProps {
   images: string[];
 }

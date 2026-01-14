@@ -86,7 +86,7 @@ export default function DonationChart({ data }: DonationChartProps) {
         <div className="bg-white rounded-lg shadow-lg p-6 text-center">
           <p className="text-gray-500 mb-2">Unable to generate charts from the current data structure.</p>
           <p className="text-sm text-gray-400">
-            Charts require columns with names containing: "Name", "Payment Mode", and "Amount"
+            Charts require columns with names containing: &quot;Name&quot;, &quot;Payment Mode&quot;, and &quot;Amount&quot;
           </p>
           <details className="mt-4 text-left">
             <summary className="cursor-pointer text-blue-600">Show data structure</summary>

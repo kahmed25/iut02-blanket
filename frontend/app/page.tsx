@@ -177,7 +177,7 @@ export default function Home() {
               return (
                 <div className="text-center py-12 text-gray-500">
                   <p>No chart data available</p>
-                  <p className="text-sm mt-2">Make sure you have a sheet with table data containing 'Name' and 'Amount (BDT)' columns</p>
+                  <p className="text-sm mt-2">Make sure you have a sheet with table data containing &apos;Name&apos; and &apos;Amount (BDT)&apos; columns</p>
                 </div>
               );
             })()}
