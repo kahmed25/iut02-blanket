@@ -24,11 +24,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS middleware
+# CORS middleware - Allow all origins for Lambda deployment
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
-    allow_credentials=True,
+    allow_origins=["*"],  # Allow all origins in production
+    allow_credentials=False,  # Must be False when allow_origins is *
     allow_methods=["*"],
     allow_headers=["*"],
 )
