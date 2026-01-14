@@ -38,6 +38,12 @@ if IMAGES_SOURCE_TYPE == "local" and IMAGES_DIR.exists():
     app.mount("/images", StaticFiles(directory=str(IMAGES_DIR)), name="images")
 
 
+@app.options("/{path:path}")
+async def options_handler(path: str):
+    """Handle CORS preflight requests"""
+    return {"message": "OK"}
+
+
 @app.get("/")
 async def root():
     """Root endpoint"""
