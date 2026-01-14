@@ -118,16 +118,44 @@ Build a web application that reads data from an Excel file and displays it in a 
    - Download and cache Excel file
    - Update image paths to use GitHub URLs
 
-### Phase 3: AWS Deployment
-1. **Infrastructure Setup**
-   - Deploy backend to AWS (EC2, ECS, or Lambda)
-   - Set up S3 bucket for Excel and images
-   - Configure CloudFront for CDN (optional)
+### Phase 3: AWS Deployment (Free Tier Optimized)
 
-2. **Update Configuration**
-   - Point to S3 URLs instead of GitHub
-   - Configure CORS if needed
-   - Set up environment variables
+**Strategy**: Minimize costs by using AWS Free Tier and keeping data on GitHub
+
+1. **Backend Deployment (AWS Lambda - FREE)**
+   - Add Mangum adapter for Lambda compatibility
+   - Create lambda_handler.py wrapper
+   - Package dependencies in deployment zip
+   - Deploy to Lambda function (256MB memory, 30s timeout)
+   - Configure environment variables for GitHub URLs
+   - Free tier: 1M requests/month + 400K GB-seconds compute
+
+2. **API Gateway Setup (HTTP API - FREE for 12 months)**
+   - Create HTTP API (cheaper than REST API)
+   - Integrate with Lambda function
+   - Configure CORS for frontend domain
+   - Use default .execute-api.amazonaws.com domain
+   - Free tier: 1M requests/month for first 12 months
+
+3. **Frontend Deployment (AWS Amplify - FREE)**
+   - Configure Next.js for static export
+   - Create amplify.yml build configuration
+   - Connect Amplify to GitHub repository
+   - Auto-deploy from dev branch
+   - Free tier: 1000 build minutes/month + 15GB served/month
+   - Built-in CDN and free SSL certificate
+
+4. **Data Storage (GitHub - FREE)**
+   - Keep Excel file in GitHub repository
+   - Keep images in GitHub repository
+   - Backend fetches from GitHub raw URLs (Phase 2 already supports this)
+   - No S3 storage costs
+   - Version control included
+
+5. **Deployment Scripts**
+   - Create deploy_lambda.sh for backend deployment
+   - Create amplify.yml for frontend build config
+   - Environment configuration files
 
 ## User-Friendly Data Updates
 
@@ -189,17 +217,58 @@ project/
 
 ## Deployment Considerations
 
-### AWS Services to Use:
-- **EC2/ECS** or **Lambda** for backend
-- **S3** for file storage
-- **CloudFront** for CDN (optional but recommended)
-- **Route 53** for domain (if needed)
-- **ALB** for load balancing (if using EC2/ECS)
+### AWS Services Used (Free Tier Optimized):
+- **AWS Lambda**: Serverless backend (always free tier: 1M requests/month)
+- **API Gateway HTTP API**: API endpoint (free for 12 months: 1M requests/month)
+- **AWS Amplify**: Frontend hosting + CDN (always free tier: 1000 build min, 15GB served/month)
+- **GitHub**: Data storage for Excel & images (always free for public repos)
+- **NO S3**: Saves storage costs by using GitHub
+- **NO CloudFront**: Amplify has built-in CDN
+- **NO EC2**: Serverless approach, no server management
 
-### Cost Optimization:
-- Use S3 for storage (very cheap)
-- Consider Lambda for serverless (pay per request)
-- CloudFront caching reduces backend load
+### Detailed Cost Analysis:
+
+#### Monthly Costs for Low Traffic POC (10,000 requests/month)
+
+**First 12 Months:**
+- AWS Lambda: $0.00 (under 1M requests free tier)
+- API Gateway HTTP API: $0.00 (under 1M requests free tier)
+- AWS Amplify: $0.00 (under 1000 build min & 15GB served)
+- GitHub: $0.00 (public repository)
+- Data Transfer: $0.00 (within 100GB free tier)
+- **Total: $0.00/month** ✅
+
+**After 12 Months:**
+- AWS Lambda: $0.00 (always free under 1M requests)
+- API Gateway HTTP API: ~$0.01/month ($1 per 1M requests)
+- AWS Amplify: $0.00 (always free under limits)
+- GitHub: $0.00 (public repository)
+- Data Transfer: $0.00 (within free tier)
+- **Total: ~$0.01/month** ✅
+
+#### Cost Breakdown by Traffic Level (After 12 Months)
+
+| Monthly Traffic | Lambda Cost | API Gateway | Amplify | Total/Month |
+|----------------|-------------|-------------|---------|-------------|
+| 1,000 requests | $0.00 | $0.00 | $0.00 | **$0.00** |
+| 10,000 requests | $0.00 | $0.01 | $0.00 | **$0.01** |
+| 100,000 requests | $0.00 | $0.10 | $0.00 | **$0.10** |
+| 1,000,000 requests | $0.00 | $1.00 | $0.00 | **$1.00** |
+
+#### Free Tier Limits:
+- **Lambda**: 1M requests + 400,000 GB-seconds compute/month (always free)
+- **API Gateway HTTP API**: 1M requests/month (free for 12 months, then $1/million)
+- **Amplify**: 1000 build minutes + 15GB served + 5GB stored/month (always free)
+- **GitHub**: Unlimited for public repositories (always free)
+- **Data Transfer**: 100GB out/month (always free)
+
+### Cost Optimization Strategies:
+- Keep data on GitHub (no S3 costs)
+- Use HTTP API instead of REST API (50% cheaper)
+- Use smallest Lambda memory size (256MB)
+- Cache data in Lambda (reduce GitHub requests)
+- Use Amplify instead of separate CloudFront
+- Stay within free tier limits for POC usage
 
 ## Next Steps
 

@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# AWS Amplify Setup Script
+# Creates Amplify app and connects to GitHub repository
+
+set -e
+
+echo "🎨 Setting up AWS Amplify for frontend deployment..."
+
+# Configuration
+APP_NAME="iut02-blanket-frontend"
+REGION="ap-southeast-1"
+GITHUB_REPO="https://github.com/kahmed25/iut02-blanket"
+BRANCH="dev"
+
+echo "📝 Configuration:"
+echo "  App Name: $APP_NAME"
+echo "  Region: $REGION"
+echo "  GitHub Repo: $GITHUB_REPO"
+echo "  Branch: $BRANCH"
+echo ""
+
+echo "⚠️  MANUAL STEPS REQUIRED:"
+echo ""
+echo "AWS Amplify deployment requires manual setup via AWS Console for GitHub integration."
+echo "Follow these steps:"
+echo ""
+echo "1. Go to AWS Amplify Console:"
+echo "   https://ap-southeast-1.console.aws.amazon.com/amplify/home?region=ap-southeast-1"
+echo ""
+echo "2. Click 'New app' → 'Host web app'"
+echo ""
+echo "3. Choose 'GitHub' as the source"
+echo ""
+echo "4. Authorize AWS Amplify to access your GitHub account"
+echo ""
+echo "5. Select repository: kahmed25/iut02-blanket"
+echo ""
+echo "6. Select branch: dev"
+echo ""
+echo "7. App name: iut02-blanket-frontend"
+echo ""
+echo "8. Build settings:"
+echo "   - Amplify will auto-detect the amplify.yml file"
+echo "   - Make sure it points to frontend/out directory"
+echo ""
+echo "9. Environment variables (Advanced settings):"
+echo "   Add: NEXT_PUBLIC_API_URL = https://hz0qnbuf64.execute-api.ap-southeast-1.amazonaws.com"
+echo "   Add: BUILD_ENV = production"
+echo ""
+echo "10. Click 'Save and deploy'"
+echo ""
+echo "11. Wait for build to complete (~5-10 minutes)"
+echo ""
+echo "12. Your app will be available at:"
+echo "    https://dev.<app-id>.amplifyapp.com"
+echo ""
+echo "💰 Cost: FREE (Amplify free tier: 1000 build minutes + 15GB served/month)"
+echo ""
+echo "✨ After deployment, test the URL and update PHASE3_COMPLETE.md"
