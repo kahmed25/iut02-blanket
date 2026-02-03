@@ -18,24 +18,56 @@ from config import (
 from excel_parser import parse_excel, get_data_summary, fetch_excel_from_url, clear_excel_cache
 import pandas as pd
 
+# Import auth routes
+from auth.routes import router as auth_router
+
+# Import Phase 5 fund management routes
+from fund.routes import router as fund_router
+
+# Import Phase 6 media management routes
+from fund.media_routes import router as media_router
+
 app = FastAPI(
     title="Excel Data Visualization API",
-    description="API for serving Excel data and images",
-    version="1.0.0"
+    description="API for serving Excel data and images with authentication and fund management",
+    version="3.0.0"
 )
 
-# CORS middleware - Allow all origins for Lambda deployment
+# CORS middleware - use environment-based origins
+import os
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8000").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins in production
-    allow_credentials=False,  # Must be False when allow_origins is *
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Include auth router
+app.include_router(auth_router)
+
+# Include Phase 5 fund management router
+app.include_router(fund_router)
+
+# Include Phase 6 media router
+app.include_router(media_router)
+
 # Mount static files for images (only for local mode)
 if IMAGES_SOURCE_TYPE == "local" and IMAGES_DIR.exists():
     app.mount("/images", StaticFiles(directory=str(IMAGES_DIR)), name="images")
+
+# Mount uploads directory for media (Phase 6)
+# In AWS Lambda, use /tmp as the writable directory
+import os
+if os.getenv("ENVIRONMENT", "local") == "aws":
+    # In AWS, use /tmp for uploads (S3 is used for actual storage)
+    UPLOADS_DIR = Path("/tmp/uploads")
+else:
+    UPLOADS_DIR = Path(__file__).parent / "uploads"
+UPLOADS_DIR.mkdir(exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
 
 @app.options("/{path:path}")
@@ -48,18 +80,46 @@ async def options_handler(path: str):
 async def root():
     """Root endpoint"""
     return {
-        "message": "Excel Data Visualization API",
-        "version": "2.0.0 (Phase 2)",
+        "message": "Excel Data Visualization API with Authentication & Fund Management",
+        "version": "3.0.0 (Phase 5 - Fund Management)",
         "configuration": {
             "excel_source": EXCEL_SOURCE_TYPE,
             "images_source": IMAGES_SOURCE_TYPE
         },
         "endpoints": {
-            "/api/data": "Get Excel data",
-            "/api/summary": "Get data summary",
-            "/api/images": "List available images",
-            "/images/{filename}": "Get image file",
-            "POST /api/cache/clear": "Clear cached data"
+            "# Excel Data (Phase 1-2)": {
+                "/api/data": "Get Excel data",
+                "/api/summary": "Get data summary",
+                "/api/images": "List available images",
+                "/images/{filename}": "Get image file",
+                "POST /api/cache/clear": "Clear cached data"
+            },
+            "# Authentication (Phase 4)": {
+                "/auth/login/{provider}": "Initiate OAuth login",
+                "/auth/callback/{provider}": "OAuth callback",
+                "/auth/me": "Get current user",
+                "/auth/refresh": "Refresh access token",
+                "/auth/logout": "Logout",
+                "/auth/providers": "Get available OAuth providers"
+            },
+            "# Fund Management (Phase 5)": {
+                "/api/projects": "CRUD for charity projects",
+                "/api/contributions": "CRUD for contributions",
+                "/api/stats": "Project statistics",
+                "/api/settings": "App settings (data source mode)",
+                "/api/users": "User role management",
+                "/api/config": "Supported currencies and payment modes"
+            },
+            "# Media Management (Phase 6)": {
+                "POST /api/media": "Upload media file",
+                "GET /api/media/project/{project_id}": "List project media",
+                "GET /api/media/{media_id}": "Get media details",
+                "GET /api/media/file/{media_id}": "Get media file",
+                "PATCH /api/media/{media_id}": "Update media caption/order",
+                "DELETE /api/media/{media_id}": "Delete media",
+                "POST /api/media/reorder/{project_id}": "Reorder media",
+                "/uploads/{path}": "Static media files"
+            }
         }
     }
 

@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { AuthProvider } from '@/auth/context/AuthContext'
+import { HelpButton } from '@/components/help/HelpButton'
 
 export const metadata: Metadata = {
-  title: 'Excel Data Visualization',
-  description: 'Interactive data visualization from Excel files',
+  title: 'IUT02 Care - Charity Fund Management',
+  description: 'Charity fund management platform with donation tracking and distribution management',
 }
 
 export default function RootLayout({
@@ -13,7 +15,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          {children}
+          <HelpButton />
+        </AuthProvider>
+      </body>
     </html>
   )
 }

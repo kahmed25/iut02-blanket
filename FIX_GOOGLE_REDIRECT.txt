@@ -1,0 +1,78 @@
+╔═══════════════════════════════════════════════════════════════╗
+║           🔧 URGENT FIX - Update Google Redirect URI          ║
+╚═══════════════════════════════════════════════════════════════╝
+
+❌ PROBLEM FOUND:
+
+Your Google OAuth redirect URI is set to:
+  http://localhost:3000/auth/callback/google (WRONG - Frontend)
+
+It MUST be:
+  http://localhost:8000/auth/callback/google (CORRECT - Backend)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ FIX THIS IN GOOGLE CLOUD CONSOLE:
+
+1. Go to: https://console.cloud.google.com/
+
+2. Select your project: "IUT02-Auth"
+
+3. Go to: APIs & Services → Credentials
+
+4. Find your OAuth 2.0 Client ID and click Edit (pencil icon)
+
+5. Under "Authorized redirect URIs":
+   - REMOVE: http://localhost:3000/auth/callback/google
+   - ADD: http://localhost:8000/auth/callback/google
+            ^^^^
+            PORT 8000 (backend), not 3000!
+
+6. Click "SAVE"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHY THIS MATTERS:
+
+The OAuth flow is:
+  Frontend → Backend → Google → Backend (callback) → Frontend
+
+Google must call back to the BACKEND (port 8000), not the frontend!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ WHAT I ALREADY FIXED:
+
+I updated your backend .env file:
+  ✓ Changed GOOGLE_REDIRECT_URI to port 8000
+  ✓ Restarted backend server (PID: 81709)
+
+Now YOU need to update Google Cloud Console!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🧪 AFTER FIXING, TEST:
+
+1. Go to: http://localhost:3000/login
+2. Click "Continue with Google"
+3. Sign in with Google
+4. You should be redirected to: http://localhost:3000/
+5. You should see: "✓ Logged in as your@email.com"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 CORRECT CONFIGURATION:
+
+Backend .env (DONE ✓):
+  GOOGLE_REDIRECT_URI=http://localhost:8000/auth/callback/google
+
+Google Cloud Console (YOU NEED TO DO THIS):
+  Authorized redirect URI: http://localhost:8000/auth/callback/google
+
+Both must match on PORT 8000!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏱️  DO THIS NOW - IT TAKES 30 SECONDS!
+
+Then try logging in again. It will work! 🚀

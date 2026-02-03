@@ -1,0 +1,65 @@
+╔════════════════════════════════════════════════════════════╗
+║         IUT02 Authentication - Quick Start Guide          ║
+╚════════════════════════════════════════════════════════════╝
+
+📋 STATUS: ✅ Ready to Test!
+   - Google OAuth configured
+   - Backend & Frontend ready
+   - Startup scripts created
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 START TESTING (2 Commands)
+
+Terminal 1 - Backend:
+  cd /Users/rashedahmed/Documents/Devopsis/IUT02/backend
+  ./start_backend.sh
+
+Terminal 2 - Frontend (new window):
+  cd /Users/rashedahmed/Documents/Devopsis/IUT02/frontend
+  ./start_frontend.sh
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🌐 TEST LOGIN
+
+Open browser: http://localhost:3000/login
+Click "Continue with Google"
+Sign in → Done! ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 USEFUL URLs
+
+Login Page:     http://localhost:3000/login
+Home Page:      http://localhost:3000/
+Backend API:    http://localhost:8000/
+API Docs:       http://localhost:8000/docs
+Providers:      http://localhost:8000/auth/providers
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔍 VERIFY
+
+Check token (browser console F12):
+  localStorage.getItem('iut02_access_token')
+
+Check database:
+  cd backend
+  sqlite3 auth.db "SELECT * FROM users;"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🛑 STOP SERVERS
+
+Press Ctrl+C in both terminals
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💰 COST: $0.00 (100% FREE)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📖 FULL DOCS: See START_TESTING.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
