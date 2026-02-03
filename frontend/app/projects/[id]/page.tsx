@@ -1,6 +1,12 @@
 'use client';
 
 import React, { useEffect, useState, Suspense } from 'react';
+
+// This is required for static export with dynamic routes
+// We'll generate an empty array since pages are client-side rendered
+export function generateStaticParams() {
+  return [];
+}
 import { useParams, useRouter } from 'next/navigation';
 import { projectsApi, statsApi, contributionsApi, usersApi, mediaApi, distributionsApi, fundApi, Project, ProjectStats, Contribution, UserWithRole, Media, MediaCounts, Distribution, DistributionStats, DistributionCreate } from '@/services/fundApi';
 import { Navigation } from '@/components/Navigation';
