@@ -5,14 +5,16 @@ frontend:
       commands:
         - cd frontend
         - npm ci
-        - echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" >> .env.production
     build:
       commands:
         - npm run build
   artifacts:
-    baseDirectory: frontend/out
+    baseDirectory: frontend
     files:
-      - '**/*'
+      - '.next/**/*'
+      - 'public/**/*'
+      - 'node_modules/**/*'
+      - 'package.json'
   cache:
     paths:
       - frontend/node_modules/**/*
