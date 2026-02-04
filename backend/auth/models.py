@@ -18,6 +18,8 @@ if DB_TYPE == "sqlite":
 # DynamoDB imports (conditional)
 if DB_TYPE == "dynamodb":
     import boto3
+    from boto3.dynamodb.conditions import Key, Attr
+    from botocore.exceptions import ClientError
     from auth.auth_config import DYNAMODB_REGION, DYNAMODB_USERS_TABLE, DYNAMODB_SESSIONS_TABLE
 
 
@@ -331,28 +333,34 @@ class DynamoDBDatabase:
         self.sessions_table = self.dynamodb.Table(DYNAMODB_SESSIONS_TABLE)
     
     def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
-        """Get user by email (requires GSI on email)"""
-        response = self.users_table.query(
-            IndexName='EmailIndex',
-            KeyConditionExpression='email = :email',
-            ExpressionAttributeValues={':email': email}
-        )
-        
-        items = response.get('Items', [])
+        """Get user by email. Uses GSI if present, falls back to scan."""
+        try:
+            response = self.users_table.query(
+                IndexName='EmailIndex',
+                KeyConditionExpression=Key('email').eq(email)
+            )
+            items = response.get('Items', [])
+        except ClientError:
+            # Fall back to scan if index not available
+            response = self.users_table.scan(
+                FilterExpression=Attr('email').eq(email)
+            )
+            items = response.get('Items', [])
         return items[0] if items else None
     
     def get_user_by_provider(self, provider: str, provider_id: str) -> Optional[Dict[str, Any]]:
-        """Get user by provider and provider_id (requires GSI)"""
-        response = self.users_table.query(
-            IndexName='ProviderIndex',
-            KeyConditionExpression='provider = :provider AND provider_id = :provider_id',
-            ExpressionAttributeValues={
-                ':provider': provider,
-                ':provider_id': provider_id
-            }
-        )
-        
-        items = response.get('Items', [])
+        """Get user by provider and provider_id. Uses GSI if present, falls back to scan."""
+        try:
+            response = self.users_table.query(
+                IndexName='ProviderIndex',
+                KeyConditionExpression=Key('provider').eq(provider) & Key('provider_id').eq(provider_id)
+            )
+            items = response.get('Items', [])
+        except ClientError:
+            response = self.users_table.scan(
+                FilterExpression=Attr('provider').eq(provider) & Attr('provider_id').eq(provider_id)
+            )
+            items = response.get('Items', [])
         return items[0] if items else None
     
     def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
@@ -410,20 +418,28 @@ class DynamoDBDatabase:
         return session
     
     def get_session_by_token(self, refresh_token: str) -> Optional[Dict[str, Any]]:
-        """Get session by refresh token (requires GSI)"""
-        response = self.sessions_table.query(
-            IndexName='RefreshTokenIndex',
-            KeyConditionExpression='refresh_token = :token',
-            ExpressionAttributeValues={':token': refresh_token}
-        )
+        """Get session by refresh token. Uses GSI if present, falls back to scan."""
+        try:
+            response = self.sessions_table.query(
+                IndexName='RefreshTokenIndex',
+                KeyConditionExpression=Key('refresh_token').eq(refresh_token)
+            )
+            items = response.get('Items', [])
+        except ClientError:
+            response = self.sessions_table.scan(
+                FilterExpression=Attr('refresh_token').eq(refresh_token)
+            )
+            items = response.get('Items', [])
         
-        items = response.get('Items', [])
         if items:
             session = items[0]
             # Check if expired
-            expires_at = datetime.fromisoformat(session['expires_at'])
-            if expires_at < datetime.utcnow():
-                return None
+            try:
+                expires_at = datetime.fromisoformat(session.get('expires_at', ''))
+                if expires_at < datetime.utcnow():
+                    return None
+            except Exception:
+                pass
             return session
         return None
     
