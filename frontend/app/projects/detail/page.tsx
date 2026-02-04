@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, Suspense } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { projectsApi, statsApi, contributionsApi, usersApi, mediaApi, distributionsApi, fundApi, Project, ProjectStats, Contribution, UserWithRole, Media, MediaCounts, Distribution, DistributionStats, DistributionCreate } from '@/services/fundApi';
 import { Navigation } from '@/components/Navigation';
 import { useAuth } from '@/auth/hooks/useAuth';
@@ -12,10 +12,10 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 const CHART_COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#84cc16'];
 
 function ProjectDetailContent() {
-  const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, loading: authLoading, user } = useAuth();
-  const projectId = params.id as string;
+  const projectId = searchParams.get('id') || '';
   const role = user?.role;
 
   const [project, setProject] = useState<Project | null>(null);

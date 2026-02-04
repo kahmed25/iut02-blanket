@@ -375,7 +375,7 @@ export default function Home() {
                           return (
                             <div
                               key={project.project_id}
-                              onClick={() => router.push(`/projects/${project.project_id}`)}
+                              onClick={() => router.push(`/projects/detail?id=${project.project_id}`)}
                               className="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 overflow-hidden cursor-pointer hover:shadow-xl hover:border-emerald-500/50 hover:-translate-y-1 transition-all duration-300 group"
                             >
                               {/* Project Header with gradient */}

@@ -335,7 +335,7 @@ export default function ProjectsPage() {
                         return (
                           <div
                             key={project.project_id}
-                            onClick={() => router.push(`/projects/${project.project_id}`)}
+                            onClick={() => router.push(`/projects/detail?id=${project.project_id}`)}
                             className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-lg hover:border-emerald-200 hover:-translate-y-1 transition-all duration-300 group"
                           >
                             {/* Project Header with gradient */}
@@ -442,7 +442,7 @@ export default function ProjectsPage() {
                 return (
                   <div
                     key={project.project_id}
-                    onClick={() => router.push(`/projects/${project.project_id}`)}
+                    onClick={() => router.push(`/projects/detail?id=${project.project_id}`)}
                     className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-lg hover:border-emerald-200 hover:-translate-y-1 transition-all duration-300 group"
                   >
                     {/* Project Header with gradient */}
