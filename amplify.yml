@@ -1,17 +1,10 @@
 version: 1
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - cd frontend
-        - npm ci
-    build:
-      commands:
-        - npm run build
-  artifacts:
-    baseDirectory: frontend/.next
-    files:
-      - '**/*'
-  cache:
-    paths:
-      - frontend/node_modules/**/*
+compute:
+  - identifier: frontend
+    buildCommand: npm run build
+    startCommand: npm start
+    buildDirectory: frontend
+    framework: nextjs
+    environmentVariables:
+      - name: NEXT_PUBLIC_API_URL
+        value: https://hz0qnbuf64.execute-api.ap-southeast-1.amazonaws.com
