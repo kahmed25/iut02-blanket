@@ -31,10 +31,17 @@ S3_MEDIA_BUCKET="iut02-media-uploads"
 # Frontend URL - Amplify deployment
 FRONTEND_URL="${FRONTEND_URL:-https://dev.d1js9a712g4lw.amplifyapp.com}"
 
-# OAuth Configuration (Update with your values)
-GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-your-google-client-id}"
-GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-your-google-client-secret}"
-JWT_SECRET_KEY="${JWT_SECRET_KEY:-your-jwt-secret-key-change-in-production}"
+# OAuth Configuration (must be provided via environment)
+# Fail fast if required secrets are missing to avoid deploying placeholders
+: "${GOOGLE_CLIENT_ID:?GOOGLE_CLIENT_ID not set}"
+: "${GOOGLE_CLIENT_SECRET:?GOOGLE_CLIENT_SECRET not set}"
+: "${JWT_SECRET_KEY:?JWT_SECRET_KEY not set}"
+
+# API base for production callback URLs
+API_BASE="${API_BASE:-https://hz0qnbuf64.execute-api.ap-southeast-1.amazonaws.com}"
+GOOGLE_REDIRECT_URI="${GOOGLE_REDIRECT_URI:-$API_BASE/auth/google/callback}"
+FACEBOOK_REDIRECT_URI="${FACEBOOK_REDIRECT_URI:-$API_BASE/auth/facebook/callback}"
+AMAZON_REDIRECT_URI="${AMAZON_REDIRECT_URI:-$API_BASE/auth/amazon/callback}"
 
 # GitHub URLs for Excel data (legacy support)
 EXCEL_URL="https://raw.githubusercontent.com/kahmed25/iut02-blanket/dev/i.02%20blanket%20distribution%202026.xlsx"
@@ -248,7 +255,9 @@ ENV_VARS+="ALLOWED_ORIGINS=$FRONTEND_URL,"
 ENV_VARS+="JWT_SECRET_KEY=$JWT_SECRET_KEY,"
 ENV_VARS+="GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID,"
 ENV_VARS+="GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET,"
-ENV_VARS+="EXCEL_SOURCE_TYPE=url,"
+ENV_VARS+="GOOGLE_REDIRECT_URI=$GOOGLE_REDIRECT_URI,"
+ENV_VARS+="FACEBOOK_REDIRECT_URI=$FACEBOOK_REDIRECT_URI,"
+ENV_VARS+="AMAZON_REDIRECT_URI=$AMAZON_REDIRECT_URI,"
 ENV_VARS+="EXCEL_URL=$EXCEL_URL,"
 ENV_VARS+="IMAGES_SOURCE_TYPE=url,"
 ENV_VARS+="IMAGES_BASE_URL=$IMAGES_BASE_URL,"
