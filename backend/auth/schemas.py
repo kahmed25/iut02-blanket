@@ -1,7 +1,7 @@
 """
 Pydantic schemas for authentication requests and responses
 """
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
