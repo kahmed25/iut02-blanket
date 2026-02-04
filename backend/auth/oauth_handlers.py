@@ -69,10 +69,20 @@ class GoogleOAuthProvider(OAuthProvider):
             "redirect_uri": self.redirect_uri,
             "grant_type": "authorization_code"
         }
-        
+
         try:
             response = requests.post(self.TOKEN_URL, data=data, timeout=10)
-            response.raise_for_status()
+            if response.status_code != 200:
+                print(
+                    "Google token exchange failed",
+                    {
+                        "status": response.status_code,
+                        "body": response.text[:500],
+                        "client_id_suffix": self.client_id[-12:] if self.client_id else None,
+                        "redirect_uri": self.redirect_uri,
+                    }
+                )
+                response.raise_for_status()
             token_data = response.json()
             return token_data.get("access_token")
         except Exception as e:
