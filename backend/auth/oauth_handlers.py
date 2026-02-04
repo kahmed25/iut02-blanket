@@ -62,16 +62,22 @@ class GoogleOAuthProvider(OAuthProvider):
     
     def exchange_code_for_token(self, code: str) -> Optional[str]:
         """Exchange authorization code for access token"""
+        # Per Google OAuth spec, client authentication can use HTTP Basic auth.
+        # Using Basic auth avoids any ambiguity in form encoding of client_secret.
         data = {
             "code": code,
-            "client_id": self.client_id,
-            "client_secret": self.client_secret,
             "redirect_uri": self.redirect_uri,
-            "grant_type": "authorization_code"
+            "grant_type": "authorization_code",
         }
 
         try:
-            response = requests.post(self.TOKEN_URL, data=data, timeout=10)
+            response = requests.post(
+                self.TOKEN_URL,
+                data=data,
+                timeout=10,
+                auth=(self.client_id, self.client_secret),  # HTTP Basic auth
+                headers={"Accept": "application/json"},
+            )
             if response.status_code != 200:
                 print(
                     "Google token exchange failed",
