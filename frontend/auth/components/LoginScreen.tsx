@@ -133,10 +133,9 @@ export function LoginScreen() {
             ) : (
               <>
                 {/* Google Button */}
-                {providers.find(p => p.name === 'google') && (
+                {providers.find(p => p.name === 'google' && p.configured) && (
                   <button
-                    onClick={() => providers.find(p => p.name === 'google')?.configured ? login('google') : null}
-                    disabled={!providers.find(p => p.name === 'google')?.configured}
+                    onClick={() => login('google')}
                     className="w-full flex items-center gap-3 px-5 py-3.5 rounded-xl font-medium transition-all duration-200 bg-white text-gray-700 hover:bg-gray-100 hover:shadow-lg"
                   >
                     <div className="flex-shrink-0">
@@ -147,10 +146,9 @@ export function LoginScreen() {
                 )}
 
                 {/* Facebook Button */}
-                {providers.find(p => p.name === 'facebook') && (
+                {providers.find(p => p.name === 'facebook' && p.configured) && (
                   <button
-                    onClick={() => providers.find(p => p.name === 'facebook')?.configured ? login('facebook') : null}
-                    disabled={!providers.find(p => p.name === 'facebook')?.configured}
+                    onClick={() => login('facebook')}
                     className="w-full flex items-center gap-3 px-5 py-3.5 rounded-xl font-medium transition-all duration-200 text-white hover:shadow-lg"
                     style={{ backgroundColor: '#1877F2' }}
                   >
@@ -162,10 +160,9 @@ export function LoginScreen() {
                 )}
 
                 {/* Amazon Button */}
-                {providers.find(p => p.name === 'amazon') && (
+                {providers.find(p => p.name === 'amazon' && p.configured) && (
                   <button
-                    onClick={() => providers.find(p => p.name === 'amazon')?.configured ? login('amazon') : null}
-                    disabled={!providers.find(p => p.name === 'amazon')?.configured}
+                    onClick={() => login('amazon')}
                     className="w-full flex items-center gap-3 px-5 py-3.5 rounded-xl font-medium transition-all duration-200 text-gray-900 hover:shadow-lg"
                     style={{ backgroundColor: '#FF9900' }}
                   >
