@@ -369,9 +369,12 @@ class DynamoDBDatabase:
         return response.get('Item')
     
     def create_user(self, email: str, username: Optional[str], provider: str, provider_id: str) -> Dict[str, Any]:
-        """Create new user"""
+        """Create new user with role assignment"""
         user_id = str(uuid.uuid4())
         now = datetime.utcnow().isoformat()
+        
+        # Auto-assign super_admin role if email matches
+        role = ROLE_SUPER_ADMIN if is_super_admin(email) else ROLE_USER
         
         user = {
             'user_id': user_id,
@@ -379,6 +382,8 @@ class DynamoDBDatabase:
             'username': username,
             'provider': provider,
             'provider_id': provider_id,
+            'role': role,
+            'assigned_projects': [],
             'created_at': now,
             'last_login': now
         }
@@ -452,6 +457,77 @@ class DynamoDBDatabase:
         session = self.get_session_by_token(refresh_token)
         if session:
             self.delete_session(session['session_id'])
+    
+    def update_user_role(self, user_id: str, role: str) -> bool:
+        """Update user's role"""
+        try:
+            self.users_table.update_item(
+                Key={'user_id': user_id},
+                UpdateExpression='SET #role = :role',
+                ExpressionAttributeNames={'#role': 'role'},
+                ExpressionAttributeValues={':role': role}
+            )
+            return True
+        except ClientError:
+            return False
+    
+    def get_all_users(self) -> list:
+        """Get all users (for admin)"""
+        response = self.users_table.scan()
+        items = response.get('Items', [])
+        
+        # Sort by created_at descending
+        items.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+        return items
+    
+    def assign_project_to_user(self, user_id: str, project_id: str) -> bool:
+        """Assign a project to a fund admin"""
+        user = self.get_user_by_id(user_id)
+        if not user:
+            return False
+        
+        # Get existing projects
+        assigned = user.get('assigned_projects', [])
+        if not isinstance(assigned, list):
+            assigned = []
+        
+        if project_id not in assigned:
+            assigned.append(project_id)
+            
+            try:
+                self.users_table.update_item(
+                    Key={'user_id': user_id},
+                    UpdateExpression='SET assigned_projects = :projects',
+                    ExpressionAttributeValues={':projects': assigned}
+                )
+                return True
+            except ClientError:
+                return False
+        return True
+    
+    def unassign_project_from_user(self, user_id: str, project_id: str) -> bool:
+        """Remove a project assignment from a fund admin"""
+        user = self.get_user_by_id(user_id)
+        if not user:
+            return False
+        
+        assigned = user.get('assigned_projects', [])
+        if not isinstance(assigned, list):
+            assigned = []
+        
+        if project_id in assigned:
+            assigned.remove(project_id)
+            
+            try:
+                self.users_table.update_item(
+                    Key={'user_id': user_id},
+                    UpdateExpression='SET assigned_projects = :projects',
+                    ExpressionAttributeValues={':projects': assigned}
+                )
+                return True
+            except ClientError:
+                return False
+        return True
 
 
 # Singleton database instance
