@@ -52,42 +52,31 @@ async def initiate_oauth_login(provider: str):
     return RedirectResponse(url=auth_url)
 
 
-@router.get("/callback/{provider}")
-async def oauth_callback(provider: str, code: str, state: Optional[str] = None):
-    """
-    Handle OAuth callback from provider
-    
-    Args:
-        provider: OAuth provider name
-        code: Authorization code from provider
-        state: State parameter for CSRF protection
-    
-    Returns:
-        Redirect to frontend with tokens
-    """
+def _process_oauth_callback(provider: str, code: str, state: Optional[str] = None):
+    """Shared implementation for handling OAuth callback."""
     # Verify state (CSRF protection)
     if state and state in oauth_states:
         expected_provider = oauth_states.pop(state)
         if expected_provider != provider:
             raise HTTPException(status_code=400, detail="Invalid state parameter")
-    
+
     oauth_provider = get_oauth_provider(provider)
     if not oauth_provider:
         raise HTTPException(status_code=400, detail=f"Unsupported provider: {provider}")
-    
+
     # Exchange code for access token
     access_token = oauth_provider.exchange_code_for_token(code)
     if not access_token:
         raise HTTPException(status_code=400, detail="Failed to exchange code for token")
-    
+
     # Get user info from provider
     user_info = oauth_provider.get_user_info(access_token)
     if not user_info:
         raise HTTPException(status_code=400, detail="Failed to get user info from provider")
-    
+
     # Check if user exists, if not create new user
     existing_user = db.get_user_by_provider(provider, user_info["provider_id"])
-    
+
     if existing_user:
         user = existing_user
         db.update_last_login(user["user_id"])
@@ -99,23 +88,39 @@ async def oauth_callback(provider: str, code: str, state: Optional[str] = None):
             provider=provider,
             provider_id=user_info["provider_id"]
         )
-    
+
     # Generate JWT tokens
     token_data = {
         "sub": user["user_id"],
         "email": user["email"],
         "provider": provider
     }
-    
+
     jwt_access_token = create_access_token(token_data)
     jwt_refresh_token = create_refresh_token(token_data)
-    
+
     # Store refresh token in database
     db.create_session(user["user_id"], jwt_refresh_token)
-    
+
     # Redirect to frontend with tokens
     redirect_url = f"{FRONTEND_URL}/auth/success?access_token={jwt_access_token}&refresh_token={jwt_refresh_token}"
     return RedirectResponse(url=redirect_url)
+
+
+@router.get("/callback/{provider}")
+async def oauth_callback(provider: str, code: str, state: Optional[str] = None):
+    """
+    Handle OAuth callback from provider at /auth/callback/{provider}
+    """
+    return _process_oauth_callback(provider, code, state)
+
+
+@router.get("/{provider}/callback")
+async def oauth_callback_alt(provider: str, code: str, state: Optional[str] = None):
+    """
+    Handle OAuth callback from provider at /auth/{provider}/callback
+    """
+    return _process_oauth_callback(provider, code, state)
 
 
 @router.post("/refresh", response_model=TokenResponse)
