@@ -35,16 +35,16 @@ export function HelpButton() {
   const pathname = usePathname();
   const contextualHelp = getHelpForRoute(pathname);
 
-  // Don't show on help pages
-  if (pathname.startsWith('/help')) {
+  // Don't show on help pages or login page
+  if (pathname.startsWith('/help') || pathname.startsWith('/login')) {
     return null;
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed top-20 right-6 z-50">
       {/* Quick Menu */}
       {isOpen && (
-        <div className="absolute bottom-16 right-0 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden mb-2">
+        <div className="absolute top-16 right-0 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden mt-2">
           <div className="p-4 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white">
             <h3 className="font-semibold">Need Help?</h3>
             <p className="text-sm text-emerald-100 mt-1">Find answers to your questions</p>
