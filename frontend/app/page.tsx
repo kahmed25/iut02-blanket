@@ -27,11 +27,19 @@ export default function Home() {
   const [projectStats, setProjectStats] = useState<Record<string, ProjectStats>>({});
   const [recentContributions, setRecentContributions] = useState<Contribution[]>([]);
 
+  // Auto-redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [authLoading, isAuthenticated, router]);
+
   // Check data source mode and load appropriate data
   useEffect(() => {
     if (isAuthenticated) {
       checkDataSourceAndLoad();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   const checkDataSourceAndLoad = async () => {
@@ -102,27 +110,19 @@ export default function Home() {
     }
   };
 
-  // Show loading while checking authentication
-  if (authLoading) {
+  // Show loading while checking authentication or redirecting
+  if (authLoading || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Checking authentication...</p>
+          <p className="mt-4 text-gray-600">{authLoading ? 'Checking authentication...' : 'Redirecting to login...'}</p>
         </div>
       </div>
     );
   }
 
-  // Auto-redirect to login if not authenticated
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.replace('/login');
-    }
-  }, [authLoading, isAuthenticated, router]);
-
-  // Show loading while redirecting
-  if (!authLoading && !isAuthenticated) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="text-center">
