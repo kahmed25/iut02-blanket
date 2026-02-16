@@ -197,11 +197,182 @@ export const authService = {
   /**
    * Get authorization header for authenticated requests
    */
-  getAuthHeader(): { Authorization: string } | {} {
+  getAuthHeader(): { Authorization: string } | Record<string, never> {
     const token = tokenService.getAccessToken();
     if (!token) {
       return {};
     }
     return { Authorization: `Bearer ${token}` };
+  },
+
+  // Email Authentication Methods
+
+  /**
+   * Login with email and password
+   */
+  async emailLogin(email: string, password: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      const response = await fetch(`${API_URL}/auth/email/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, message: data.detail || 'Login failed' };
+      }
+
+      // Store tokens
+      tokenService.setTokens(data.access_token, data.refresh_token);
+      return { success: true };
+    } catch (error) {
+      console.error('Email login error:', error);
+      return { success: false, message: 'Network error. Please try again.' };
+    }
+  },
+
+  /**
+   * Register with email, username, and password
+   */
+  async emailRegister(email: string, username: string, password: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      const response = await fetch(`${API_URL}/auth/email/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, username, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, message: data.detail || 'Registration failed' };
+      }
+
+      return { success: true, message: data.message };
+    } catch (error) {
+      console.error('Email register error:', error);
+      return { success: false, message: 'Network error. Please try again.' };
+    }
+  },
+
+  /**
+   * Request password reset
+   */
+  async forgotPassword(email: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      const response = await fetch(`${API_URL}/auth/email/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, message: data.detail || 'Failed to send reset link' };
+      }
+
+      return { success: true, message: data.message };
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      return { success: false, message: 'Network error. Please try again.' };
+    }
+  },
+
+  /**
+   * Verify email with code
+   */
+  async verifyEmail(email: string, code: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      const response = await fetch(`${API_URL}/auth/email/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, code }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, message: data.detail || 'Verification failed' };
+      }
+
+      // If login tokens are returned, store them
+      if (data.access_token) {
+        tokenService.setTokens(data.access_token, data.refresh_token);
+      }
+
+      return { success: true, message: data.message };
+    } catch (error) {
+      console.error('Email verify error:', error);
+      return { success: false, message: 'Network error. Please try again.' };
+    }
+  },
+
+  /**
+   * Reset password with token
+   */
+  async resetPassword(token: string, newPassword: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      const response = await fetch(`${API_URL}/auth/email/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token, new_password: newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, message: data.detail || 'Password reset failed' };
+      }
+
+      return { success: true, message: data.message };
+    } catch (error) {
+      console.error('Reset password error:', error);
+      return { success: false, message: 'Network error. Please try again.' };
+    }
+  },
+
+  /**
+   * Change password (for logged-in users)
+   */
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message?: string }> {
+    const token = tokenService.getAccessToken();
+    if (!token) {
+      return { success: false, message: 'Not authenticated' };
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/auth/email/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, message: data.detail || 'Password change failed' };
+      }
+
+      return { success: true, message: data.message };
+    } catch (error) {
+      console.error('Change password error:', error);
+      return { success: false, message: 'Network error. Please try again.' };
+    }
   },
 };

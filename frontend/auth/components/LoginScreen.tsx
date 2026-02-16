@@ -5,10 +5,21 @@ import Image from 'next/image';
 import { useAuth } from '../hooks/useAuth';
 import { authService, OAuthProvider } from '../services/authService';
 
+type AuthMode = 'login' | 'register' | 'forgot-password' | 'verify-email';
+
 export function LoginScreen() {
   const { login } = useAuth();
   const [providers, setProviders] = useState<OAuthProvider[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authMode, setAuthMode] = useState<AuthMode>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     const fetchProviders = async () => {
@@ -20,6 +31,98 @@ export function LoginScreen() {
 
     fetchProviders();
   }, []);
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsSubmitting(true);
+    try {
+      const response = await authService.emailLogin(email, password);
+      if (response.success) {
+        window.location.href = '/';
+      } else {
+        setError(response.message || 'Login failed');
+      }
+    } catch (err) {
+      setError('Login failed. Please check your credentials.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const response = await authService.emailRegister(email, username, password);
+      if (response.success) {
+        setSuccess('Registration successful! Please check your email to verify your account.');
+        setAuthMode('verify-email');
+      } else {
+        setError(response.message || 'Registration failed');
+      }
+    } catch (err) {
+      setError('Registration failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsSubmitting(true);
+    try {
+      const response = await authService.forgotPassword(email);
+      if (response.success) {
+        setSuccess('Password reset link sent to your email.');
+      } else {
+        setError(response.message || 'Failed to send reset link');
+      }
+    } catch (err) {
+      setError('Failed to send reset link. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsSubmitting(true);
+    try {
+      const response = await authService.verifyEmail(email, verificationCode);
+      if (response.success) {
+        setSuccess('Email verified successfully! You can now login.');
+        setAuthMode('login');
+      } else {
+        setError(response.message || 'Verification failed');
+      }
+    } catch (err) {
+      setError('Verification failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setUsername('');
+    setVerificationCode('');
+    setError('');
+    setSuccess('');
+  };
 
   const getProviderIcon = (providerName: string) => {
     switch (providerName) {
@@ -112,82 +215,269 @@ export function LoginScreen() {
 
         {/* Right Side - Login Form */}
         <div className="md:w-1/2 p-8 md:p-12">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
-            <p className="text-gray-400">Sign in to access your account</p>
-          </div>
-
-          <div className="space-y-3">
-            {providers.filter(p => p.configured).length === 0 ? (
-              <div className="text-center py-6">
-                <div className="w-14 h-14 bg-red-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-                <p className="text-red-400 font-medium mb-2">No OAuth providers configured</p>
-                <p className="text-sm text-gray-500">
-                  Please configure at least one OAuth provider.
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Google Button */}
-                {providers.find(p => p.name === 'google' && p.configured) && (
-                  <button
-                    onClick={() => login('google')}
-                    className="w-full flex items-center gap-3 px-5 py-3.5 rounded-xl font-medium transition-all duration-200 bg-white text-gray-700 hover:bg-gray-100 hover:shadow-lg"
-                  >
-                    <div className="flex-shrink-0">
-                      {getProviderIcon('google')}
-                    </div>
-                    <span className="flex-1 text-left">Continue with Google</span>
-                  </button>
-                )}
-
-                {/* Facebook Button */}
-                {providers.find(p => p.name === 'facebook' && p.configured) && (
-                  <button
-                    onClick={() => login('facebook')}
-                    className="w-full flex items-center gap-3 px-5 py-3.5 rounded-xl font-medium transition-all duration-200 text-white hover:shadow-lg"
-                    style={{ backgroundColor: '#1877F2' }}
-                  >
-                    <div className="flex-shrink-0">
-                      {getProviderIcon('facebook')}
-                    </div>
-                    <span className="flex-1 text-left">Continue with Facebook</span>
-                  </button>
-                )}
-
-                {/* Amazon Button */}
-                {providers.find(p => p.name === 'amazon' && p.configured) && (
-                  <button
-                    onClick={() => login('amazon')}
-                    className="w-full flex items-center gap-3 px-5 py-3.5 rounded-xl font-medium transition-all duration-200 text-gray-900 hover:shadow-lg"
-                    style={{ backgroundColor: '#FF9900' }}
-                  >
-                    <div className="flex-shrink-0">
-                      {getProviderIcon('amazon')}
-                    </div>
-                    <span className="flex-1 text-left">Continue with Amazon</span>
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-
-          <div className="mt-8 pt-6 border-t border-gray-700">
-            <p className="text-xs text-center text-gray-500">
-              By signing in, you agree to our{' '}
-              <a href="#" className="text-red-400 hover:text-red-300">Terms of Service</a>
-              {' '}and{' '}
-              <a href="#" className="text-red-400 hover:text-red-300">Privacy Policy</a>
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-white mb-2">
+              {authMode === 'login' && 'Welcome Back'}
+              {authMode === 'register' && 'Create Account'}
+              {authMode === 'forgot-password' && 'Reset Password'}
+              {authMode === 'verify-email' && 'Verify Email'}
+            </h2>
+            <p className="text-gray-400">
+              {authMode === 'login' && 'Sign in to access your account'}
+              {authMode === 'register' && 'Fill in your details to get started'}
+              {authMode === 'forgot-password' && 'Enter your email to reset password'}
+              {authMode === 'verify-email' && 'Enter the code sent to your email'}
             </p>
           </div>
 
-          <div className="mt-4 text-center">
-            <p className="text-xs text-gray-500">
-              🔒 Secure authentication powered by OAuth 2.0
+          {/* Error/Success Messages */}
+          {error && (
+            <div className="mb-4 p-3 rounded-lg bg-red-900/50 border border-red-700 text-red-300 text-sm">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="mb-4 p-3 rounded-lg bg-emerald-900/50 border border-emerald-700 text-emerald-300 text-sm">
+              {success}
+            </div>
+          )}
+
+          {/* Email Login Form */}
+          {authMode === 'login' && (
+            <form onSubmit={handleEmailLogin} className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-700 border border-slate-600 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  placeholder="your@email.com"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-700 border border-slate-600 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => { resetForm(); setAuthMode('forgot-password'); }}
+                  className="text-sm text-emerald-400 hover:text-emerald-300"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-3 rounded-xl font-medium transition-all duration-200 bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Signing in...' : 'Sign In'}
+              </button>
+              <p className="text-center text-sm text-gray-400">
+                Don&apos;t have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => { resetForm(); setAuthMode('register'); }}
+                  className="text-emerald-400 hover:text-emerald-300 font-medium"
+                >
+                  Create Account
+                </button>
+              </p>
+            </form>
+          )}
+
+          {/* Register Form */}
+          {authMode === 'register' && (
+            <form onSubmit={handleRegister} className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Username</label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-700 border border-slate-600 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  placeholder="Your name"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-700 border border-slate-600 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  placeholder="your@email.com"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-700 border border-slate-600 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  placeholder="Min. 8 characters"
+                  required
+                  minLength={8}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Confirm Password</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-700 border border-slate-600 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-3 rounded-xl font-medium transition-all duration-200 bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Creating Account...' : 'Create Account'}
+              </button>
+              <p className="text-center text-sm text-gray-400">
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => { resetForm(); setAuthMode('login'); }}
+                  className="text-emerald-400 hover:text-emerald-300 font-medium"
+                >
+                  Sign In
+                </button>
+              </p>
+            </form>
+          )}
+
+          {/* Forgot Password Form */}
+          {authMode === 'forgot-password' && (
+            <form onSubmit={handleForgotPassword} className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-700 border border-slate-600 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  placeholder="your@email.com"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-3 rounded-xl font-medium transition-all duration-200 bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Sending...' : 'Send Reset Link'}
+              </button>
+              <p className="text-center text-sm text-gray-400">
+                Remember your password?{' '}
+                <button
+                  type="button"
+                  onClick={() => { resetForm(); setAuthMode('login'); }}
+                  className="text-emerald-400 hover:text-emerald-300 font-medium"
+                >
+                  Sign In
+                </button>
+              </p>
+            </form>
+          )}
+
+          {/* Verify Email Form */}
+          {authMode === 'verify-email' && (
+            <form onSubmit={handleVerifyEmail} className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Verification Code</label>
+                <input
+                  type="text"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-700 border border-slate-600 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-center text-2xl tracking-widest"
+                  placeholder="000000"
+                  required
+                  maxLength={6}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-3 rounded-xl font-medium transition-all duration-200 bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Verifying...' : 'Verify Email'}
+              </button>
+              <p className="text-center text-sm text-gray-400">
+                <button
+                  type="button"
+                  onClick={() => { resetForm(); setAuthMode('login'); }}
+                  className="text-emerald-400 hover:text-emerald-300 font-medium"
+                >
+                  Back to Sign In
+                </button>
+              </p>
+            </form>
+          )}
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-700"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-slate-800 text-gray-400">Or continue with</span>
+            </div>
+          </div>
+
+          {/* OAuth Buttons */}
+          <div className="space-y-3">
+            {/* Google Button */}
+            {providers.find(p => p.name === 'google' && p.configured) && (
+              <button
+                onClick={() => login('google')}
+                className="w-full flex items-center gap-3 px-5 py-3 rounded-xl font-medium transition-all duration-200 bg-white text-gray-700 hover:bg-gray-100 hover:shadow-lg"
+              >
+                <div className="flex-shrink-0">
+                  {getProviderIcon('google')}
+                </div>
+                <span className="flex-1 text-left">Continue with Google</span>
+              </button>
+            )}
+
+            {/* Amazon Button */}
+            {providers.find(p => p.name === 'amazon' && p.configured) && (
+              <button
+                onClick={() => login('amazon')}
+                className="w-full flex items-center gap-3 px-5 py-3 rounded-xl font-medium transition-all duration-200 text-gray-900 hover:shadow-lg"
+                style={{ backgroundColor: '#FF9900' }}
+              >
+                <div className="flex-shrink-0">
+                  {getProviderIcon('amazon')}
+                </div>
+                <span className="flex-1 text-left">Continue with Amazon</span>
+              </button>
+            )}
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-gray-700">
+            <p className="text-xs text-center text-gray-500">
+              By signing in, you agree to our{' '}
+              <a href="#" className="text-emerald-400 hover:text-emerald-300">Terms of Service</a>
+              {' '}and{' '}
+              <a href="#" className="text-emerald-400 hover:text-emerald-300">Privacy Policy</a>
             </p>
           </div>
         </div>

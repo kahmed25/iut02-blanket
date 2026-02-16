@@ -52,3 +52,34 @@ class OAuthCallbackRequest(BaseModel):
 
 class LogoutRequest(BaseModel):
     refresh_token: Optional[str] = None
+
+
+# Email Authentication Schemas
+class EmailLoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class EmailRegisterRequest(BaseModel):
+    email: str
+    username: str
+    password: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class VerifyEmailRequest(BaseModel):
+    email: str
+    code: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str

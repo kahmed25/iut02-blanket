@@ -20,6 +20,7 @@ import pandas as pd
 
 # Import auth routes
 from auth.routes import router as auth_router
+from auth.email_auth import router as email_auth_router
 
 # Import Phase 5 fund management routes
 from fund.routes import router as fund_router
@@ -47,6 +48,7 @@ app.add_middleware(
 
 # Include auth router
 app.include_router(auth_router)
+app.include_router(email_auth_router)
 
 # Include Phase 5 fund management router
 app.include_router(fund_router)
@@ -101,6 +103,14 @@ async def root():
                 "/auth/refresh": "Refresh access token",
                 "/auth/logout": "Logout",
                 "/auth/providers": "Get available OAuth providers"
+            },
+            "# Email Authentication": {
+                "POST /auth/email/login": "Login with email/password",
+                "POST /auth/email/register": "Register with email/password",
+                "POST /auth/email/verify": "Verify email with code",
+                "POST /auth/email/forgot-password": "Send password reset link",
+                "POST /auth/email/reset-password": "Reset password with token",
+                "POST /auth/email/change-password": "Change password (logged in)"
             },
             "# Fund Management (Phase 5)": {
                 "/api/projects": "CRUD for charity projects",

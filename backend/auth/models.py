@@ -48,7 +48,7 @@ class SQLiteDatabase:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
-        # Users table (with Phase 5 role support)
+        # Users table (with Phase 5 role support and email auth fields)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 user_id TEXT PRIMARY KEY,
@@ -58,6 +58,8 @@ class SQLiteDatabase:
                 provider_id TEXT NOT NULL,
                 role TEXT NOT NULL DEFAULT 'user',
                 assigned_projects TEXT DEFAULT '[]',
+                password_hash TEXT,
+                email_verified INTEGER DEFAULT 0,
                 created_at TEXT NOT NULL,
                 last_login TEXT NOT NULL,
                 UNIQUE(provider, provider_id)
@@ -72,6 +74,17 @@ class SQLiteDatabase:
         
         try:
             cursor.execute("ALTER TABLE users ADD COLUMN assigned_projects TEXT DEFAULT '[]'")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+        
+        # Add email auth columns if they don't exist
+        try:
+            cursor.execute("ALTER TABLE users ADD COLUMN password_hash TEXT")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+        
+        try:
+            cursor.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0")
         except sqlite3.OperationalError:
             pass  # Column already exists
         
@@ -322,6 +335,68 @@ class SQLiteDatabase:
         conn.commit()
         conn.close()
         return True
+    
+    def create_email_user(self, email: str, username: str, password_hash: str) -> Dict[str, Any]:
+        """Create new user with email/password authentication"""
+        user_id = str(uuid.uuid4())
+        now = datetime.utcnow().isoformat()
+        
+        # Auto-assign super_admin role if email matches
+        role = ROLE_SUPER_ADMIN if is_super_admin(email) else ROLE_USER
+        
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute(
+            """
+            INSERT INTO users (user_id, email, username, provider, provider_id, role, assigned_projects, password_hash, email_verified, created_at, last_login)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (user_id, email, username, 'email', email, role, '[]', password_hash, 1, now, now)
+        )
+        
+        conn.commit()
+        conn.close()
+        
+        return {
+            "user_id": user_id,
+            "email": email,
+            "username": username,
+            "provider": 'email',
+            "provider_id": email,
+            "role": role,
+            "assigned_projects": [],
+            "password_hash": password_hash,
+            "email_verified": True,
+            "created_at": now,
+            "last_login": now
+        }
+    
+    def update_email_user_fields(self, user_id: str, password_hash: str, email_verified: bool):
+        """Update email user specific fields"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute(
+            "UPDATE users SET password_hash = ?, email_verified = ? WHERE user_id = ?",
+            (password_hash, 1 if email_verified else 0, user_id)
+        )
+        
+        conn.commit()
+        conn.close()
+    
+    def update_user_password(self, user_id: str, password_hash: str):
+        """Update user's password hash"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute(
+            "UPDATE users SET password_hash = ? WHERE user_id = ?",
+            (password_hash, user_id)
+        )
+        
+        conn.commit()
+        conn.close()
 
 
 class DynamoDBDatabase:
@@ -528,6 +603,56 @@ class DynamoDBDatabase:
             except ClientError:
                 return False
         return True
+    
+    def create_email_user(self, email: str, username: str, password_hash: str) -> Dict[str, Any]:
+        """Create new user with email/password authentication"""
+        user_id = str(uuid.uuid4())
+        now = datetime.utcnow().isoformat()
+        
+        # Auto-assign super_admin role if email matches
+        role = ROLE_SUPER_ADMIN if is_super_admin(email) else ROLE_USER
+        
+        user = {
+            'user_id': user_id,
+            'email': email,
+            'username': username,
+            'provider': 'email',
+            'provider_id': email,
+            'role': role,
+            'assigned_projects': [],
+            'password_hash': password_hash,
+            'email_verified': True,
+            'created_at': now,
+            'last_login': now
+        }
+        
+        self.users_table.put_item(Item=user)
+        return user
+    
+    def update_email_user_fields(self, user_id: str, password_hash: str, email_verified: bool):
+        """Update email user specific fields"""
+        try:
+            self.users_table.update_item(
+                Key={'user_id': user_id},
+                UpdateExpression='SET password_hash = :ph, email_verified = :ev',
+                ExpressionAttributeValues={
+                    ':ph': password_hash,
+                    ':ev': email_verified
+                }
+            )
+        except ClientError as e:
+            print(f"Error updating email user fields: {e}")
+    
+    def update_user_password(self, user_id: str, password_hash: str):
+        """Update user's password hash"""
+        try:
+            self.users_table.update_item(
+                Key={'user_id': user_id},
+                UpdateExpression='SET password_hash = :ph',
+                ExpressionAttributeValues={':ph': password_hash}
+            )
+        except ClientError as e:
+            print(f"Error updating password: {e}")
 
 
 # Singleton database instance

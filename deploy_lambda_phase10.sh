@@ -184,6 +184,15 @@ cat > dynamodb-s3-policy.json <<EOF
         "arn:aws:s3:::$S3_MEDIA_BUCKET",
         "arn:aws:s3:::$S3_MEDIA_BUCKET/*"
       ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ses:SendEmail",
+        "ses:SendRawEmail",
+        "ses:GetIdentityVerificationAttributes"
+      ],
+      "Resource": "*"
     }
   ]
 }
@@ -261,7 +270,11 @@ ENV_VARS+="AMAZON_REDIRECT_URI=$AMAZON_REDIRECT_URI,"
 ENV_VARS+="EXCEL_URL=$EXCEL_URL,"
 ENV_VARS+="IMAGES_SOURCE_TYPE=url,"
 ENV_VARS+="IMAGES_BASE_URL=$IMAGES_BASE_URL,"
-ENV_VARS+="DATA_SOURCE_MODE=dynamic"
+ENV_VARS+="DATA_SOURCE_MODE=dynamic,"
+ENV_VARS+="EMAIL_ENABLED=true,"
+ENV_VARS+="AWS_REGION=$REGION,"
+ENV_VARS+="SES_FROM_EMAIL=login@devopz.ai,"
+ENV_VARS+="SES_FROM_NAME=IUT02 Care"
 ENV_VARS+="}"
 
 # Check if Lambda function exists
