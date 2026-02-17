@@ -432,43 +432,34 @@ export function LoginScreen() {
             </form>
           )}
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-700"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-slate-800 text-gray-400">Or continue with</span>
-            </div>
-          </div>
-
-          {/* OAuth Buttons */}
-          <div className="space-y-3">
-            {/* Google Button - Always show for now */}
-            <button
-              onClick={() => login('google')}
-              className="w-full flex items-center gap-3 px-5 py-3 rounded-xl font-medium transition-all duration-200 bg-white text-gray-700 hover:bg-gray-100 hover:shadow-lg"
-            >
-              <div className="flex-shrink-0">
-                {getProviderIcon('google')}
-              </div>
-              <span className="flex-1 text-left">Continue with Google</span>
-            </button>
-
-            {/* Amazon Button */}
-            {providers.find(p => p.name === 'amazon' && p.configured) && (
-              <button
-                onClick={() => login('amazon')}
-                className="w-full flex items-center gap-3 px-5 py-3 rounded-xl font-medium transition-all duration-200 text-gray-900 hover:shadow-lg"
-                style={{ backgroundColor: '#FF9900' }}
-              >
-                <div className="flex-shrink-0">
-                  {getProviderIcon('amazon')}
+          {/* OAuth Buttons - Only show for login/register modes */}
+          {(authMode === 'login' || authMode === 'register') && (
+            <>
+              {/* Divider */}
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-700"></div>
                 </div>
-                <span className="flex-1 text-left">Continue with Amazon</span>
-              </button>
-            )}
-          </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-4 bg-slate-800 text-gray-400">Or continue with</span>
+                </div>
+              </div>
+
+              {/* OAuth Buttons */}
+              <div className="space-y-3">
+                {/* Google Button - Always show for now */}
+                <button
+                  onClick={() => login('google')}
+                  className="w-full flex items-center gap-3 px-5 py-3 rounded-xl font-medium transition-all duration-200 bg-white text-gray-700 hover:bg-gray-100 hover:shadow-lg"
+                >
+                  <div className="flex-shrink-0">
+                    {getProviderIcon('google')}
+                  </div>
+                  <span className="flex-1 text-left">Continue with Google</span>
+                </button>
+              </div>
+            </>
+          )}
 
           <div className="mt-6 pt-4 border-t border-gray-700">
             <p className="text-xs text-center text-gray-500">
