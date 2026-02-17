@@ -48,8 +48,13 @@ export const tokenService = {
    * Store both tokens
    */
   setTokens(accessToken: string, refreshToken: string): void {
+    console.log('[tokenService] setTokens called');
+    console.log('[tokenService] typeof window:', typeof window);
     this.setAccessToken(accessToken);
     this.setRefreshToken(refreshToken);
+    // Verify storage worked
+    const stored = localStorage.getItem('iut02_access_token');
+    console.log('[tokenService] Verified token in localStorage:', !!stored);
   },
 
   /**

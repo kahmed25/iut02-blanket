@@ -212,6 +212,7 @@ export const authService = {
    */
   async emailLogin(email: string, password: string): Promise<{ success: boolean; message?: string }> {
     try {
+      console.log('[emailLogin] Calling API:', `${API_URL}/auth/email/login`);
       const response = await fetch(`${API_URL}/auth/email/login`, {
         method: 'POST',
         headers: {
@@ -221,16 +222,25 @@ export const authService = {
       });
 
       const data = await response.json();
+      console.log('[emailLogin] Response status:', response.status);
 
       if (!response.ok) {
+        console.log('[emailLogin] Login failed:', data.detail);
         return { success: false, message: data.detail || 'Login failed' };
       }
 
       // Store tokens
+      console.log('[emailLogin] Storing tokens...');
       tokenService.setTokens(data.access_token, data.refresh_token);
+
+      // Verify tokens were stored
+      const storedToken = tokenService.getAccessToken();
+      console.log('[emailLogin] Token stored successfully:', !!storedToken);
+      console.log('[emailLogin] Stored token preview:', storedToken ? storedToken.substring(0, 30) + '...' : 'null');
+
       return { success: true };
     } catch (error) {
-      console.error('Email login error:', error);
+      console.error('[emailLogin] Error:', error);
       return { success: false, message: 'Network error. Please try again.' };
     }
   },
