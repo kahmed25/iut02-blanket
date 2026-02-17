@@ -39,16 +39,15 @@ export function LoginScreen() {
     try {
       const response = await authService.emailLogin(email, password);
       if (response.success) {
-        // Refresh the auth context to update user state
-        await refreshUser();
-        // Now redirect to home page
+        // Tokens are stored by emailLogin, redirect to home
+        // The homepage will pick up the tokens automatically
         window.location.href = '/';
       } else {
         setError(response.message || 'Login failed');
+        setIsSubmitting(false);
       }
     } catch (err) {
       setError('Login failed. Please check your credentials.');
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -106,38 +105,21 @@ export function LoginScreen() {
       const response = await authService.verifyEmail(email, verificationCode);
       console.log('Verification response:', response);
       if (response.success) {
-        // Show success message immediately
-        setSuccess('Email verified successfully! Logging you in...');
+        // Show success message
+        setSuccess('Email verified successfully! Redirecting to dashboard...');
 
-        // Small delay to ensure tokens are stored
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        // Refresh auth context
-        await refreshUser();
-
-        // Check if user is now logged in
-        const currentUser = await authService.getCurrentUser();
-        console.log('Current user after verification:', currentUser);
-
-        if (currentUser) {
-          // User is logged in - show confirmation then redirect
-          setSuccess('Email verified successfully! Redirecting to dashboard...');
-          // Give user time to see the success message
-          await new Promise(resolve => setTimeout(resolve, 1500));
+        // Give user time to see the success message, then redirect
+        // The homepage will pick up the stored tokens automatically
+        setTimeout(() => {
           window.location.href = '/';
-        } else {
-          // Verification succeeded but auto-login failed - user needs to login manually
-          setSuccess('Email verified successfully! Please login with your credentials.');
-          setAuthMode('login');
-          setPassword('');
-        }
+        }, 1500);
       } else {
         setError(response.message || 'Verification failed');
+        setIsSubmitting(false);
       }
     } catch (err) {
       console.error('Verification error:', err);
       setError('Verification failed. Please try again.');
-    } finally {
       setIsSubmitting(false);
     }
   };
