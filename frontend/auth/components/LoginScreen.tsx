@@ -107,13 +107,13 @@ export function LoginScreen() {
       console.log('Verification response:', response);
       if (response.success) {
         // Show success message
-        setSuccess('Email verified successfully! Redirecting to dashboard...');
+        setSuccess('✓ Email verified successfully! Redirecting to dashboard...');
+        setIsSubmitting(false);
 
-        // Give user time to see the success message, then redirect
-        // The homepage will pick up the stored tokens automatically
+        // Give user time to see the success message (3 seconds), then redirect
         setTimeout(() => {
           window.location.href = '/';
-        }, 1500);
+        }, 3000);
       } else {
         setError(response.message || 'Verification failed');
         setIsSubmitting(false);
@@ -412,6 +412,12 @@ export function LoginScreen() {
           {/* Verify Email Form */}
           {authMode === 'verify-email' && (
             <form onSubmit={handleVerifyEmail} className="space-y-4 mb-6">
+              {/* Show which email is being verified */}
+              {email && (
+                <div className="text-center text-sm text-gray-400 mb-2">
+                  Verifying: <span className="text-emerald-400">{email}</span>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Verification Code</label>
                 <input
@@ -422,6 +428,7 @@ export function LoginScreen() {
                   placeholder="000000"
                   required
                   maxLength={6}
+                  autoComplete="off"
                 />
               </div>
               <button
