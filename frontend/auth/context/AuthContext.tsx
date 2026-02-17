@@ -24,15 +24,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('AuthContext: Calling authService.getCurrentUser()');
       const currentUser = await authService.getCurrentUser();
       console.log('AuthContext: Got user:', currentUser);
-      if (currentUser) {
-        setUser(currentUser);
-        return currentUser;
-      }
-      return null;
+      setUser(currentUser);
     } catch (error) {
       console.error('AuthContext: Error refreshing user:', error);
       setUser(null);
-      return null;
     }
   }, []);
 
