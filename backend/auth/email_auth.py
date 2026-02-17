@@ -25,23 +25,197 @@ from auth.auth_config import (
 # Create router
 router = APIRouter(prefix="/auth/email", tags=["email-authentication"])
 
-# In-memory storage for verification codes and reset tokens (use Redis/DynamoDB in production)
-verification_codes = {}  # {email: {"code": "123456", "expires": datetime, "username": "...", "password_hash": "..."}}
-password_reset_tokens = {}  # {token: {"email": "...", "expires": datetime}}
-
-# AWS SES Email configuration
+# AWS Configuration
 import os
 SES_REGION = os.getenv("SES_REGION", os.getenv("AWS_REGION", "us-east-1"))
 SES_FROM_EMAIL = os.getenv("SES_FROM_EMAIL", "login@devopz.ai")
 SES_FROM_NAME = os.getenv("SES_FROM_NAME", "IUT02 Care")
 EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "false").lower() == "true"
 ENVIRONMENT = os.getenv("ENVIRONMENT", "local")
+DYNAMODB_REGION = os.getenv("DYNAMODB_REGION", "ap-southeast-1")
+VERIFICATION_TABLE = os.getenv("DYNAMODB_VERIFICATION_TABLE", "iut02-verification-codes")
 
-# Initialize SES client
+# Initialize AWS clients
 if ENVIRONMENT == "aws":
     ses_client = boto3.client('ses', region_name=SES_REGION)
+    dynamodb = boto3.resource('dynamodb', region_name=DYNAMODB_REGION)
+    verification_table = dynamodb.Table(VERIFICATION_TABLE)
 else:
     ses_client = None
+    dynamodb = None
+    verification_table = None
+
+# Fallback in-memory storage for local development
+_local_verification_codes = {}
+_local_reset_tokens = {}
+
+
+# ============================================================================
+# DynamoDB Storage Functions for Verification Codes and Reset Tokens
+# ============================================================================
+
+def store_verification_code(email: str, code: str, username: str, password_hash: str, expires_hours: int = 1):
+    """Store verification code in DynamoDB or local memory"""
+    expires_at = (datetime.utcnow() + timedelta(hours=expires_hours)).isoformat()
+    
+    if ENVIRONMENT == "aws" and verification_table:
+        try:
+            verification_table.put_item(Item={
+                'pk': f"VERIFY#{email}",
+                'sk': 'pending',
+                'code': code,
+                'username': username,
+                'password_hash': password_hash,
+                'expires_at': expires_at,
+                'created_at': datetime.utcnow().isoformat(),
+                'type': 'verification'
+            })
+            print(f"[VERIFICATION] Stored code for {email} in DynamoDB")
+            return True
+        except Exception as e:
+            print(f"[VERIFICATION ERROR] Failed to store code: {e}")
+            return False
+    else:
+        # Local fallback
+        _local_verification_codes[email] = {
+            'code': code,
+            'username': username,
+            'password_hash': password_hash,
+            'expires': datetime.utcnow() + timedelta(hours=expires_hours)
+        }
+        print(f"[VERIFICATION] Stored code for {email} in local memory")
+        return True
+
+
+def get_verification_code(email: str) -> Optional[dict]:
+    """Get verification code from DynamoDB or local memory"""
+    if ENVIRONMENT == "aws" and verification_table:
+        try:
+            response = verification_table.get_item(Key={
+                'pk': f"VERIFY#{email}",
+                'sk': 'pending'
+            })
+            item = response.get('Item')
+            if item:
+                # Check if expired
+                expires_at = datetime.fromisoformat(item['expires_at'])
+                if datetime.utcnow() > expires_at:
+                    # Delete expired item
+                    delete_verification_code(email)
+                    return None
+                return {
+                    'code': item['code'],
+                    'username': item['username'],
+                    'password_hash': item['password_hash'],
+                    'expires': expires_at
+                }
+            return None
+        except Exception as e:
+            print(f"[VERIFICATION ERROR] Failed to get code: {e}")
+            return None
+    else:
+        # Local fallback
+        data = _local_verification_codes.get(email)
+        if data and datetime.utcnow() <= data['expires']:
+            return data
+        elif data:
+            del _local_verification_codes[email]
+        return None
+
+
+def delete_verification_code(email: str):
+    """Delete verification code from DynamoDB or local memory"""
+    if ENVIRONMENT == "aws" and verification_table:
+        try:
+            verification_table.delete_item(Key={
+                'pk': f"VERIFY#{email}",
+                'sk': 'pending'
+            })
+            print(f"[VERIFICATION] Deleted code for {email}")
+        except Exception as e:
+            print(f"[VERIFICATION ERROR] Failed to delete code: {e}")
+    else:
+        _local_verification_codes.pop(email, None)
+
+
+def store_reset_token(token: str, email: str, user_id: str, expires_hours: int = 1):
+    """Store password reset token in DynamoDB or local memory"""
+    expires_at = (datetime.utcnow() + timedelta(hours=expires_hours)).isoformat()
+    
+    if ENVIRONMENT == "aws" and verification_table:
+        try:
+            verification_table.put_item(Item={
+                'pk': f"RESET#{token}",
+                'sk': 'pending',
+                'email': email,
+                'user_id': user_id,
+                'expires_at': expires_at,
+                'created_at': datetime.utcnow().isoformat(),
+                'type': 'reset'
+            })
+            print(f"[RESET] Stored token for {email} in DynamoDB")
+            return True
+        except Exception as e:
+            print(f"[RESET ERROR] Failed to store token: {e}")
+            return False
+    else:
+        # Local fallback
+        _local_reset_tokens[token] = {
+            'email': email,
+            'user_id': user_id,
+            'expires': datetime.utcnow() + timedelta(hours=expires_hours)
+        }
+        print(f"[RESET] Stored token for {email} in local memory")
+        return True
+
+
+def get_reset_token(token: str) -> Optional[dict]:
+    """Get reset token from DynamoDB or local memory"""
+    if ENVIRONMENT == "aws" and verification_table:
+        try:
+            response = verification_table.get_item(Key={
+                'pk': f"RESET#{token}",
+                'sk': 'pending'
+            })
+            item = response.get('Item')
+            if item:
+                # Check if expired
+                expires_at = datetime.fromisoformat(item['expires_at'])
+                if datetime.utcnow() > expires_at:
+                    delete_reset_token(token)
+                    return None
+                return {
+                    'email': item['email'],
+                    'user_id': item['user_id'],
+                    'expires': expires_at
+                }
+            return None
+        except Exception as e:
+            print(f"[RESET ERROR] Failed to get token: {e}")
+            return None
+    else:
+        # Local fallback
+        data = _local_reset_tokens.get(token)
+        if data and datetime.utcnow() <= data['expires']:
+            return data
+        elif data:
+            del _local_reset_tokens[token]
+        return None
+
+
+def delete_reset_token(token: str):
+    """Delete reset token from DynamoDB or local memory"""
+    if ENVIRONMENT == "aws" and verification_table:
+        try:
+            verification_table.delete_item(Key={
+                'pk': f"RESET#{token}",
+                'sk': 'pending'
+            })
+            print(f"[RESET] Deleted token")
+        except Exception as e:
+            print(f"[RESET ERROR] Failed to delete token: {e}")
+    else:
+        _local_reset_tokens.pop(token, None)
 
 
 def hash_password(password: str) -> str:
@@ -183,13 +357,9 @@ async def email_register(request: EmailRegisterRequest):
     code = generate_verification_code()
     password_hash = hash_password(request.password)
     
-    # Store pending registration
-    verification_codes[request.email] = {
-        "code": code,
-        "expires": datetime.utcnow() + timedelta(hours=1),
-        "username": request.username,
-        "password_hash": password_hash
-    }
+    # Store pending registration in DynamoDB
+    if not store_verification_code(request.email, code, request.username, password_hash):
+        raise HTTPException(status_code=500, detail="Failed to store verification code")
     
     # Send verification email
     subject = "Verify your IUT02 Care account"
@@ -220,14 +390,11 @@ async def verify_email(request: VerifyEmailRequest):
     """
     Verify email with code and create user account
     """
-    pending = verification_codes.get(request.email)
+    # Get pending verification from DynamoDB
+    pending = get_verification_code(request.email)
     
     if not pending:
         raise HTTPException(status_code=400, detail="No pending verification for this email")
-    
-    if datetime.utcnow() > pending["expires"]:
-        del verification_codes[request.email]
-        raise HTTPException(status_code=400, detail="Verification code expired")
     
     if pending["code"] != request.code:
         raise HTTPException(status_code=400, detail="Invalid verification code")
@@ -255,8 +422,8 @@ async def verify_email(request: VerifyEmailRequest):
         # Update with password hash and email_verified flag
         db.update_email_user_fields(user["user_id"], pending["password_hash"], True)
     
-    # Clean up verification code
-    del verification_codes[request.email]
+    # Clean up verification code from DynamoDB
+    delete_verification_code(request.email)
     
     # Generate tokens and log user in
     token_data = {
@@ -290,13 +457,10 @@ async def forgot_password(request: ForgotPasswordRequest):
         # Don't reveal if email exists or not
         return {"message": "If your email is registered, you will receive a password reset link"}
     
-    # Generate reset token
+    # Generate reset token and store in DynamoDB
     token = generate_reset_token()
-    password_reset_tokens[token] = {
-        "email": request.email,
-        "user_id": user["user_id"],
-        "expires": datetime.utcnow() + timedelta(hours=1)
-    }
+    if not store_reset_token(token, request.email, user["user_id"]):
+        raise HTTPException(status_code=500, detail="Failed to generate reset token")
     
     # Send reset email
     reset_url = f"{FRONTEND_URL}/reset-password?token={token}"
@@ -331,14 +495,11 @@ async def reset_password(request: ResetPasswordRequest):
     """
     Reset password using token
     """
-    token_data = password_reset_tokens.get(request.token)
+    # Get token data from DynamoDB
+    token_data = get_reset_token(request.token)
     
     if not token_data:
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
-    
-    if datetime.utcnow() > token_data["expires"]:
-        del password_reset_tokens[request.token]
-        raise HTTPException(status_code=400, detail="Reset token has expired")
     
     if len(request.new_password) < 8:
         raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
@@ -350,8 +511,8 @@ async def reset_password(request: ResetPasswordRequest):
     except AttributeError:
         db.update_email_user_fields(token_data["user_id"], new_hash, True)
     
-    # Clean up token
-    del password_reset_tokens[request.token]
+    # Clean up token from DynamoDB
+    delete_reset_token(request.token)
     
     return {"message": "Password reset successfully. You can now login with your new password."}
 
