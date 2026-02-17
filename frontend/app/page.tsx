@@ -29,7 +29,9 @@ export default function Home() {
 
   // Auto-redirect to login if not authenticated
   useEffect(() => {
+    console.log('Homepage: authLoading=', authLoading, 'isAuthenticated=', isAuthenticated);
     if (!authLoading && !isAuthenticated) {
+      console.log('Homepage: Redirecting to login...');
       router.replace('/login');
     }
   }, [authLoading, isAuthenticated, router]);

@@ -24,10 +24,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('AuthContext: Calling authService.getCurrentUser()');
       const currentUser = await authService.getCurrentUser();
       console.log('AuthContext: Got user:', currentUser);
-      setUser(currentUser);
+      if (currentUser) {
+        setUser(currentUser);
+        return currentUser;
+      }
+      return null;
     } catch (error) {
       console.error('AuthContext: Error refreshing user:', error);
       setUser(null);
+      return null;
     }
   }, []);
 
@@ -54,8 +59,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (token) {
         console.log('AuthContext: Token found, fetching user data...');
         try {
-          await refreshUser();
-          console.log('AuthContext: User data fetched successfully');
+          const fetchedUser = await authService.getCurrentUser();
+          console.log('AuthContext: User data fetched:', fetchedUser);
+          if (fetchedUser) {
+            setUser(fetchedUser);
+            console.log('AuthContext: User state set successfully');
+          }
         } catch (err) {
           console.error('AuthContext: Error fetching user:', err);
         }
@@ -64,11 +73,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setLoading(false);
-      console.log('AuthContext: Loading complete, user:', user ? 'exists' : 'null');
     };
 
     initAuth();
-  }, [refreshUser]);
+  }, []);
 
   const value: AuthContextType = {
     user,
@@ -78,6 +86,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout,
     refreshUser,
   };
+
+  console.log('AuthContext render: loading=', loading, 'isAuthenticated=', !!user);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
