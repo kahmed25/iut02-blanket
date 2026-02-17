@@ -36,14 +36,25 @@ app = FastAPI(
 
 # CORS middleware - use environment-based origins
 import os
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8000").split(",")
+# CORS origins - include all domains
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://www.idot02.com,https://dev.d1js9a712g4lw.amplifyapp.com,http://localhost:3000,http://localhost:8000").split(",")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language",
+        "Content-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Origin",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers"
+    ],
 )
 
 # Include auth router
