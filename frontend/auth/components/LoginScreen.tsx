@@ -8,7 +8,7 @@ import { authService, OAuthProvider } from '../services/authService';
 type AuthMode = 'login' | 'register' | 'forgot-password' | 'verify-email';
 
 export function LoginScreen() {
-  const { login } = useAuth();
+  const { login, refreshUser } = useAuth();
   const [providers, setProviders] = useState<OAuthProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [authMode, setAuthMode] = useState<AuthMode>('login');
@@ -39,6 +39,9 @@ export function LoginScreen() {
     try {
       const response = await authService.emailLogin(email, password);
       if (response.success) {
+        // Refresh the auth context to update user state
+        await refreshUser();
+        // Now redirect to home page
         window.location.href = '/';
       } else {
         setError(response.message || 'Login failed');
@@ -102,8 +105,17 @@ export function LoginScreen() {
     try {
       const response = await authService.verifyEmail(email, verificationCode);
       if (response.success) {
-        setSuccess('Email verified successfully! You can now login.');
-        setAuthMode('login');
+        // If verification includes login tokens (user is logged in automatically)
+        await refreshUser();
+        const currentUser = await authService.getCurrentUser();
+        if (currentUser) {
+          // User is logged in, redirect to home
+          window.location.href = '/';
+        } else {
+          // Just verified, show success message
+          setSuccess('Email verified successfully! You can now login.');
+          setAuthMode('login');
+        }
       } else {
         setError(response.message || 'Verification failed');
       }
