@@ -31,7 +31,7 @@ password_reset_tokens = {}  # {token: {"email": "...", "expires": datetime}}
 
 # AWS SES Email configuration
 import os
-AWS_REGION = os.getenv("AWS_REGION", "ap-southeast-1")
+SES_REGION = os.getenv("SES_REGION", os.getenv("AWS_REGION", "us-east-1"))
 SES_FROM_EMAIL = os.getenv("SES_FROM_EMAIL", "login@devopz.ai")
 SES_FROM_NAME = os.getenv("SES_FROM_NAME", "IUT02 Care")
 EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "false").lower() == "true"
@@ -39,7 +39,7 @@ ENVIRONMENT = os.getenv("ENVIRONMENT", "local")
 
 # Initialize SES client
 if ENVIRONMENT == "aws":
-    ses_client = boto3.client('ses', region_name=AWS_REGION)
+    ses_client = boto3.client('ses', region_name=SES_REGION)
 else:
     ses_client = None
 
