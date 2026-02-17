@@ -27,11 +27,9 @@ export default function Home() {
   const [projectStats, setProjectStats] = useState<Record<string, ProjectStats>>({});
   const [recentContributions, setRecentContributions] = useState<Contribution[]>([]);
 
-  // Auto-redirect to login if not authenticated
+  // Redirect to login if not authenticated (after loading)
   useEffect(() => {
-    console.log('Homepage: authLoading=', authLoading, 'isAuthenticated=', isAuthenticated);
     if (!authLoading && !isAuthenticated) {
-      console.log('Homepage: Redirecting to login...');
       router.replace('/login');
     }
   }, [authLoading, isAuthenticated, router]);
@@ -43,6 +41,30 @@ export default function Home() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0f172a' }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto"></div>
+          <p className="mt-4 text-gray-300">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading while redirecting to login
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0f172a' }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto"></div>
+          <p className="mt-4 text-gray-300">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
 
   const checkDataSourceAndLoad = async () => {
     try {
