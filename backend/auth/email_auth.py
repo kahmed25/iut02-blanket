@@ -390,29 +390,32 @@ async def verify_email(request: VerifyEmailRequest):
     """
     Verify email with code and create user account
     """
+    print(f"[EMAIL_VERIFY] Starting verification for {request.email}")
+
     # Get pending verification from DynamoDB
     pending = get_verification_code(request.email)
-    
+
     if not pending:
-        raise HTTPException(status_code=400, detail="No pending verification for this email")
-    
+        print(f"[EMAIL_VERIFY ERROR] No pending verification found for {request.email}")
+        raise HTTPException(status_code=400, detail="No pending verification for this email. Please register again.")
+
     if pending["code"] != request.code:
-        raise HTTPException(status_code=400, detail="Invalid verification code")
-    
+        print(f"[EMAIL_VERIFY ERROR] Invalid code for {request.email}: expected {pending['code']}, got {request.code}")
+        raise HTTPException(status_code=400, detail="Invalid verification code. Please check and try again.")
+
+    print(f"[EMAIL_VERIFY] Code verified for {request.email}, creating user...")
+
     # Create user
-    user_id = str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
-    role = ROLE_SUPER_ADMIN if is_super_admin(request.email) else ROLE_USER
-    
-    # Use create_email_user method if available, otherwise fall back to modified create_user
     try:
         user = db.create_email_user(
             email=request.email,
             username=pending["username"],
             password_hash=pending["password_hash"]
         )
+        print(f"[EMAIL_VERIFY] User created successfully: {user['user_id']}")
     except AttributeError:
         # Fallback: create user with email as provider_id and store password_hash separately
+        print(f"[EMAIL_VERIFY] Using fallback user creation for {request.email}")
         user = db.create_user(
             email=request.email,
             username=pending["username"],
@@ -421,28 +424,41 @@ async def verify_email(request: VerifyEmailRequest):
         )
         # Update with password hash and email_verified flag
         db.update_email_user_fields(user["user_id"], pending["password_hash"], True)
-    
+        print(f"[EMAIL_VERIFY] Fallback user created: {user['user_id']}")
+    except Exception as e:
+        print(f"[EMAIL_VERIFY ERROR] Failed to create user: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create user account. Please try again.")
+
     # Clean up verification code from DynamoDB
     delete_verification_code(request.email)
-    
+
     # Generate tokens and log user in
     token_data = {
         "sub": user["user_id"],
         "email": user["email"],
         "provider": "email"
     }
-    
+
     access_token = create_access_token(token_data)
     refresh_token = create_refresh_token(token_data)
-    
-    db.create_session(user["user_id"], refresh_token)
-    
+
+    # Create session
+    try:
+        db.create_session(user["user_id"], refresh_token)
+        print(f"[EMAIL_VERIFY] Session created for user {user['user_id']}")
+    except Exception as e:
+        print(f"[EMAIL_VERIFY WARNING] Failed to create session: {e}")
+        # Continue anyway - user can still login with credentials
+
+    print(f"[EMAIL_VERIFY SUCCESS] Verification complete for {request.email}, user_id: {user['user_id']}")
+
     return {
         "message": "Email verified successfully",
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
-        "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        "user_id": user["user_id"]
     }
 
 

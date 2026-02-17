@@ -292,6 +292,7 @@ export const authService = {
    */
   async verifyEmail(email: string, code: string): Promise<{ success: boolean; message?: string }> {
     try {
+      console.log('[authService.verifyEmail] Sending verification request for:', email);
       const response = await fetch(`${API_URL}/auth/email/verify`, {
         method: 'POST',
         headers: {
@@ -301,19 +302,25 @@ export const authService = {
       });
 
       const data = await response.json();
+      console.log('[authService.verifyEmail] Response:', { status: response.status, hasToken: !!data.access_token, userId: data.user_id });
 
       if (!response.ok) {
+        console.error('[authService.verifyEmail] Error:', data.detail);
         return { success: false, message: data.detail || 'Verification failed' };
       }
 
       // If login tokens are returned, store them
       if (data.access_token) {
+        console.log('[authService.verifyEmail] Storing tokens...');
         tokenService.setTokens(data.access_token, data.refresh_token);
+        console.log('[authService.verifyEmail] Tokens stored, verifying...');
+        const storedToken = tokenService.getAccessToken();
+        console.log('[authService.verifyEmail] Token stored successfully:', !!storedToken);
       }
 
       return { success: true, message: data.message };
     } catch (error) {
-      console.error('Email verify error:', error);
+      console.error('[authService.verifyEmail] Network error:', error);
       return { success: false, message: 'Network error. Please try again.' };
     }
   },

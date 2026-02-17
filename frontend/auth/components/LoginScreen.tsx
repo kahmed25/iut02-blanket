@@ -106,22 +106,29 @@ export function LoginScreen() {
       const response = await authService.verifyEmail(email, verificationCode);
       console.log('Verification response:', response);
       if (response.success) {
+        // Show success message immediately
+        setSuccess('Email verified successfully! Logging you in...');
+
         // Small delay to ensure tokens are stored
         await new Promise(resolve => setTimeout(resolve, 500));
+
         // Refresh auth context
         await refreshUser();
+
         // Check if user is now logged in
         const currentUser = await authService.getCurrentUser();
         console.log('Current user after verification:', currentUser);
+
         if (currentUser) {
-          // User is logged in, redirect to home
-          console.log('Redirecting to home...');
+          // User is logged in - show confirmation then redirect
+          setSuccess('Email verified successfully! Redirecting to dashboard...');
+          // Give user time to see the success message
+          await new Promise(resolve => setTimeout(resolve, 1500));
           window.location.href = '/';
         } else {
-          // Verification succeeded but no auto-login, redirect to login
+          // Verification succeeded but auto-login failed - user needs to login manually
           setSuccess('Email verified successfully! Please login with your credentials.');
           setAuthMode('login');
-          // Pre-fill email for convenience
           setPassword('');
         }
       } else {
