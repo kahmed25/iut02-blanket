@@ -3,14 +3,10 @@ frontend:
   phases:
     preBuild:
       commands:
-        - cd frontend
-        - echo "NEXT_PUBLIC_API_URL=https://hz0qnbuf64.execute-api.ap-southeast-1.amazonaws.com" > .env.production
-        - cat .env.production
-        - npm ci
+        - cd frontend && echo "NEXT_PUBLIC_API_URL=https://hz0qnbuf64.execute-api.ap-southeast-1.amazonaws.com" > .env.production && cat .env.production && npm ci
     build:
       commands:
-        - cd frontend
-        - npm run build
+        - cd frontend && npm run build
   artifacts:
     baseDirectory: frontend/out
     files:
