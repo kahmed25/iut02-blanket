@@ -39,19 +39,15 @@ export function LoginScreen() {
     try {
       const response = await authService.emailLogin(email, password);
       if (response.success) {
-        console.log('Login successful, refreshing user context...');
-        // Refresh auth context first to ensure user state is updated
-        await refreshUser();
-        console.log('User context refreshed, redirecting...');
-        // Small delay to ensure state is propagated
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 100);
+        console.log('Login successful, tokens stored. Redirecting to homepage...');
+        // Redirect immediately - the homepage will handle auth check
+        window.location.replace('/');
       } else {
         setError(response.message || 'Login failed');
         setIsSubmitting(false);
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('Login failed. Please check your credentials.');
       setIsSubmitting(false);
     }

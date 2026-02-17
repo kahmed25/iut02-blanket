@@ -47,18 +47,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Check for existing session on mount
   useEffect(() => {
     const initAuth = async () => {
-      const hasToken = tokenService.hasAccessToken();
-      console.log('AuthContext: Checking authentication, hasToken:', hasToken);
-      
-      if (hasToken) {
+      const token = tokenService.getAccessToken();
+      console.log('AuthContext: Checking authentication');
+      console.log('AuthContext: Token from localStorage:', token ? `${token.substring(0, 20)}...` : 'null');
+
+      if (token) {
         console.log('AuthContext: Token found, fetching user data...');
-        await refreshUser();
+        try {
+          await refreshUser();
+          console.log('AuthContext: User data fetched successfully');
+        } catch (err) {
+          console.error('AuthContext: Error fetching user:', err);
+        }
       } else {
-        console.log('AuthContext: No token found');
+        console.log('AuthContext: No token in localStorage');
       }
-      
+
       setLoading(false);
-      console.log('AuthContext: Loading complete');
+      console.log('AuthContext: Loading complete, user:', user ? 'exists' : 'null');
     };
 
     initAuth();
