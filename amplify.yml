@@ -7,7 +7,9 @@ frontend:
         - npm ci
     build:
       commands:
-        - echo "NEXT_PUBLIC_API_URL=https://hz0qnbuf64.execute-api.ap-southeast-1.amazonaws.com" >> .env.production
+        - cd frontend
+        - echo "NEXT_PUBLIC_API_URL=https://hz0qnbuf64.execute-api.ap-southeast-1.amazonaws.com" > .env.local
+        - cat .env.local
         - npm run build
   artifacts:
     baseDirectory: frontend/out
