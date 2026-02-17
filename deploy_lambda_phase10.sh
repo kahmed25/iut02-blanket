@@ -192,7 +192,10 @@ cat > dynamodb-s3-policy.json <<EOF
         "ses:SendRawEmail",
         "ses:GetIdentityVerificationAttributes"
       ],
-      "Resource": "*"
+      "Resource": [
+        "arn:aws:ses:us-east-1:*:identity/*",
+        "arn:aws:ses:ap-southeast-1:*:identity/*"
+      ]
     }
   ]
 }
@@ -272,7 +275,7 @@ ENV_VARS+="IMAGES_SOURCE_TYPE=url,"
 ENV_VARS+="IMAGES_BASE_URL=$IMAGES_BASE_URL,"
 ENV_VARS+="DATA_SOURCE_MODE=dynamic,"
 ENV_VARS+="EMAIL_ENABLED=true,"
-ENV_VARS+="SES_REGION=us-east-1,"
+ENV_VARS+="SES_REGION=ap-southeast-1,"
 ENV_VARS+="SES_FROM_EMAIL=login@devopz.ai,"
 ENV_VARS+="SES_FROM_NAME=IUT02 Care"
 ENV_VARS+="}"
