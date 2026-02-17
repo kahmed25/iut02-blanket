@@ -39,9 +39,14 @@ export function LoginScreen() {
     try {
       const response = await authService.emailLogin(email, password);
       if (response.success) {
-        // Tokens are stored by emailLogin, redirect to home
-        // The homepage will pick up the tokens automatically
-        window.location.href = '/';
+        console.log('Login successful, refreshing user context...');
+        // Refresh auth context first to ensure user state is updated
+        await refreshUser();
+        console.log('User context refreshed, redirecting...');
+        // Small delay to ensure state is propagated
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 100);
       } else {
         setError(response.message || 'Login failed');
         setIsSubmitting(false);
