@@ -444,18 +444,16 @@ export function LoginScreen() {
 
           {/* OAuth Buttons */}
           <div className="space-y-3">
-            {/* Google Button */}
-            {providers.find(p => p.name === 'google' && p.configured) && (
-              <button
-                onClick={() => login('google')}
-                className="w-full flex items-center gap-3 px-5 py-3 rounded-xl font-medium transition-all duration-200 bg-white text-gray-700 hover:bg-gray-100 hover:shadow-lg"
-              >
-                <div className="flex-shrink-0">
-                  {getProviderIcon('google')}
-                </div>
-                <span className="flex-1 text-left">Continue with Google</span>
-              </button>
-            )}
+            {/* Google Button - Always show for now */}
+            <button
+              onClick={() => login('google')}
+              className="w-full flex items-center gap-3 px-5 py-3 rounded-xl font-medium transition-all duration-200 bg-white text-gray-700 hover:bg-gray-100 hover:shadow-lg"
+            >
+              <div className="flex-shrink-0">
+                {getProviderIcon('google')}
+              </div>
+              <span className="flex-1 text-left">Continue with Google</span>
+            </button>
 
             {/* Amazon Button */}
             {providers.find(p => p.name === 'amazon' && p.configured) && (
