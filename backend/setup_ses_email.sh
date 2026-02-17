@@ -15,7 +15,7 @@ echo "From Email: $FROM_EMAIL"
 echo
 
 # Check if AWS CLI is configured
-if ! aws sts get-caller-identity &>/dev/null; then
+if ! aws sts get-caller-identity --profile default &>/dev/null; then
     echo "❌ AWS CLI not configured or credentials invalid"
     echo "Please run 'aws configure' first"
     exit 1
@@ -29,7 +29,8 @@ VERIFICATION_STATUS=$(aws ses get-identity-verification-attributes \
     --identities $FROM_EMAIL \
     --region $REGION \
     --query "VerificationAttributes.\"$FROM_EMAIL\".VerificationStatus" \
-    --output text 2>/dev/null || echo "NotFound")
+    --output text \
+    --profile default 2>/dev/null || echo "NotFound")
 
 if [ "$VERIFICATION_STATUS" = "Success" ]; then
     echo "✅ Email $FROM_EMAIL is already verified in SES"
@@ -40,7 +41,8 @@ elif [ "$VERIFICATION_STATUS" = "NotFound" ] || [ "$VERIFICATION_STATUS" = "None
     echo "📨 Email $FROM_EMAIL not verified. Initiating verification..."
     aws ses verify-email-identity \
         --email-address $FROM_EMAIL \
-        --region $REGION
+        --region $REGION \
+        --profile default
     echo "✅ Verification email sent to $FROM_EMAIL"
     echo "   Please check your email and click the verification link"
 else
@@ -53,13 +55,14 @@ echo "📊 Checking SES sending quota and rate limits..."
 QUOTA_INFO=$(aws ses describe-account-sending-enabled \
     --region $REGION \
     --query "Enabled" \
-    --output text 2>/dev/null || echo "error")
+    --output text \
+    --profile default 2>/dev/null || echo "error")
 
 if [ "$QUOTA_INFO" = "True" ]; then
     echo "✅ SES sending is enabled for this account"
     
     # Get sending quota details
-    SENDING_QUOTA=$(aws ses get-send-quota --region $REGION 2>/dev/null || echo "{}")
+    SENDING_QUOTA=$(aws ses get-send-quota --region $REGION --profile default 2>/dev/null || echo "{}")
     if [ "$SENDING_QUOTA" != "{}" ]; then
         MAX_24_HOUR=$(echo $SENDING_QUOTA | jq -r '.Max24HourSend // "Unknown"')
         MAX_SEND_RATE=$(echo $SENDING_QUOTA | jq -r '.MaxSendRate // "Unknown"')
@@ -82,7 +85,8 @@ echo "🏖️  Checking SES sandbox status..."
 SANDBOX_STATUS=$(aws ses get-account-sending-enabled \
     --region $REGION \
     --query "Enabled" \
-    --output text 2>/dev/null)
+    --output text \
+    --profile default 2>/dev/null)
 
 # Try sending a test email to check sandbox restrictions
 echo "📧 Testing email capabilities..."
@@ -94,7 +98,8 @@ echo "📋 Currently verified email addresses:"
 VERIFIED_EMAILS=$(aws ses list-verified-email-addresses \
     --region $REGION \
     --query "VerifiedEmailAddresses" \
-    --output table 2>/dev/null || echo "Could not retrieve verified emails")
+    --output table \
+    --profile default 2>/dev/null || echo "Could not retrieve verified emails")
 
 if [ "$VERIFIED_EMAILS" != "Could not retrieve verified emails" ]; then
     echo "$VERIFIED_EMAILS"
@@ -112,8 +117,8 @@ echo "   3. Test email sending with your application"
 echo "   4. Monitor sending quotas and bounce/complaint rates"
 echo
 echo "💡 Useful commands:"
-echo "   • Check verification: aws ses get-identity-verification-attributes --identities $FROM_EMAIL --region $REGION"
-echo "   • Send test email: aws ses send-email --destination ToAddresses=test@example.com --message Subject='{Data=\"Test\"}',Body='{Text={Data=\"Test\"}}' --source $FROM_EMAIL --region $REGION"
-echo "   • Check sending stats: aws ses get-send-statistics --region $REGION"
+echo "   • Check verification: aws ses get-identity-verification-attributes --identities $FROM_EMAIL --region $REGION --profile default"
+echo "   • Send test email: aws ses send-email --destination ToAddresses=test@example.com --message Subject='{Data=\"Test\"}',Body='{Text={Data=\"Test\"}}' --source $FROM_EMAIL --region $REGION --profile default"
+echo "   • Check sending stats: aws ses get-send-statistics --region $REGION --profile default"
 echo
 echo "🔗 AWS SES Console: https://console.aws.amazon.com/ses/home?region=$REGION"
