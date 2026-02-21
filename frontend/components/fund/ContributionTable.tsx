@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Contribution } from '@/services/fundApi';
+import { formatExact } from '@/utils/formatNumber';
 
 interface ContributionTableProps {
   contributions: Contribution[];
@@ -125,7 +126,7 @@ export function ContributionTable({
               )}
               <td className="px-4 py-4 whitespace-nowrap">
                 <div className="text-sm font-semibold text-gray-900">
-                  {contribution.amount.toLocaleString()}
+                  {formatExact(contribution.amount)}
                   <span className="text-gray-500 font-normal ml-1">{contribution.currency}</span>
                 </div>
               </td>

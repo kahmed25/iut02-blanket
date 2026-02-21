@@ -6,6 +6,7 @@ import { Navigation } from '@/components/Navigation';
 import { RoleProtectedRoute } from '@/auth/components/RoleProtectedRoute';
 import { projectsApi, ImportPreviewResponse } from '@/services/fundApi';
 import { tokenService } from '@/auth/services/tokenService';
+import { formatExact } from '@/utils/formatNumber';
 
 function ImportProjectContent() {
   const router = useRouter();
@@ -304,7 +305,7 @@ function ImportProjectContent() {
                   <div>
                     <span className="text-gray-500">Target:</span>
                     <span className="ml-2 font-medium text-gray-900">
-                      {preview.project.currency} {preview.project.target_amount?.toLocaleString() || 0}
+                      {preview.project.currency} {formatExact(preview.project.target_amount || 0)}
                     </span>
                   </div>
                   <div>
@@ -333,7 +334,7 @@ function ImportProjectContent() {
                   <p className="text-sm text-red-700">Invalid</p>
                 </div>
                 <div className="bg-amber-50 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-amber-600">৳{(preview.summary.contributions_amount || 0).toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-amber-600">৳{formatExact(preview.summary.contributions_amount || 0)}</p>
                   <p className="text-sm text-amber-700">Total Amount</p>
                 </div>
               </div>
@@ -363,7 +364,7 @@ function ImportProjectContent() {
                             <td className="px-3 py-2 text-gray-500">{c.row}</td>
                             <td className="px-3 py-2">{c.contributor_name || '-'}</td>
                             <td className="px-3 py-2 text-right font-medium">
-                              {c.amount ? `৳${c.amount.toLocaleString()}` : '-'}
+                              {c.amount ? `৳${formatExact(c.amount)}` : '-'}
                             </td>
                             <td className="px-3 py-2">{c.payment_mode || '-'}</td>
                             <td className="px-3 py-2">{c.contribution_date || '-'}</td>
@@ -419,7 +420,7 @@ function ImportProjectContent() {
                         <p className="text-sm text-red-700">Invalid</p>
                       </div>
                       <div className="bg-indigo-50 rounded-lg p-4 text-center">
-                        <p className="text-2xl font-bold text-indigo-600">৳{(preview.summary.distributions_amount || 0).toLocaleString()}</p>
+                        <p className="text-2xl font-bold text-indigo-600">৳{formatExact(preview.summary.distributions_amount || 0)}</p>
                         <p className="text-sm text-indigo-700">Total Distributed</p>
                       </div>
                     </div>
@@ -447,7 +448,7 @@ function ImportProjectContent() {
                               <td className="px-3 py-2">{d.institution_type || '-'}</td>
                               <td className="px-3 py-2">{d.institution_name || '-'}</td>
                               <td className="px-3 py-2 text-right font-medium">
-                                {d.amount ? `${d.currency || '৳'}${d.amount.toLocaleString()}` : '-'}
+                                {d.amount ? `${d.currency || '৳'}${formatExact(d.amount)}` : '-'}
                               </td>
                               <td className="px-3 py-2">{d.distribution_date || '-'}</td>
                               <td className="px-3 py-2 text-center">

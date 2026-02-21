@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { formatExact } from '@/utils/formatNumber';
 
 interface DonationChartProps {
   data: any[];
@@ -129,7 +130,7 @@ export default function DonationChart({ data }: DonationChartProps) {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => `৳${value.toLocaleString()}`} />
+              <Tooltip formatter={(value: number) => `৳${formatExact(value)}`} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -152,7 +153,7 @@ export default function DonationChart({ data }: DonationChartProps) {
                 interval={0}
               />
               <YAxis />
-              <Tooltip formatter={(value: number) => `৳${value.toLocaleString()}`} />
+              <Tooltip formatter={(value: number) => `৳${formatExact(value)}`} />
               <Legend />
               <Bar dataKey="amount" fill="#3b82f6" name="Amount (BDT)" />
             </BarChart>
@@ -170,7 +171,7 @@ export default function DonationChart({ data }: DonationChartProps) {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
-              <Tooltip formatter={(value: number) => `৳${value.toLocaleString()}`} />
+              <Tooltip formatter={(value: number) => `৳${formatExact(value)}`} />
               <Legend />
               <Bar dataKey="value" fill="#10b981" name="Total Amount (BDT)" />
             </BarChart>

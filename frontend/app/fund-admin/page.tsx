@@ -25,6 +25,7 @@ import {
 } from '@/components/fund';
 import MediaGallery from '@/components/media/MediaGallery';
 import MediaUploader from '@/components/media/MediaUploader';
+import { formatExact } from '@/utils/formatNumber';
 
 function FundAdminPageContent() {
   return (
@@ -398,11 +399,11 @@ function FundAdminDashboard() {
                           <p className="text-slate-400 text-xs uppercase tracking-wide mt-1">Progress</p>
                         </div>
                         <div className="bg-white/5 rounded-lg p-3 text-center">
-                          <p className="text-2xl font-bold text-emerald-400">৳{(projectStats.total_raised || 0).toLocaleString()}</p>
+                          <p className="text-2xl font-bold text-emerald-400">৳{formatExact(projectStats.total_raised || 0)}</p>
                           <p className="text-slate-400 text-xs uppercase tracking-wide mt-1">Collected</p>
                         </div>
                         <div className="bg-white/5 rounded-lg p-3 text-center">
-                          <p className="text-2xl font-bold text-white">৳{(projectStats.target_amount || 0).toLocaleString()}</p>
+                          <p className="text-2xl font-bold text-white">৳{formatExact(projectStats.target_amount || 0)}</p>
                           <p className="text-slate-400 text-xs uppercase tracking-wide mt-1">Target</p>
                         </div>
                         <div className="bg-white/5 rounded-lg p-3 text-center">

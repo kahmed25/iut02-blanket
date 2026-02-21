@@ -35,10 +35,14 @@ export function HelpButton() {
   const pathname = usePathname();
   const contextualHelp = getHelpForRoute(pathname);
 
-  // Don't show on help pages or login page
+  // Don't show on help pages, login page, or any authenticated pages (hide completely after login)
+  // Only show on login and help pages
   if (pathname.startsWith('/help') || pathname.startsWith('/login')) {
     return null;
   }
+
+  // Hide on all other pages (authenticated pages)
+  return null;
 
   return (
     <div className="fixed top-20 right-6 z-50">

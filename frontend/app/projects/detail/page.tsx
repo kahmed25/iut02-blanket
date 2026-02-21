@@ -8,6 +8,7 @@ import { useAuth } from '@/auth/hooks/useAuth';
 import MediaGallery from '@/components/media/MediaGallery';
 import MediaUploader from '@/components/media/MediaUploader';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
+import { formatNumber, formatExact } from '@/utils/formatNumber';
 
 const CHART_COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#84cc16'];
 
@@ -26,7 +27,7 @@ function ProjectDetailContent() {
   const [error, setError] = useState<string | null>(null);
   const [showUploader, setShowUploader] = useState(false);
   const [mediaRefreshKey, setMediaRefreshKey] = useState(0);
-  const [activeTab, setActiveTab] = useState<'overview' | 'donate' | 'contributions' | 'distribution' | 'media' | 'team'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'contributions' | 'distribution' | 'media' | 'team'>('overview');
   
   // Distribution state
   const [distributions, setDistributions] = useState<Distribution[]>([]);
@@ -265,11 +266,11 @@ function ProjectDetailContent() {
                   <p className="text-slate-400 text-xs uppercase tracking-wide mt-1">Progress</p>
                 </div>
                 <div className="bg-white/5 rounded-lg p-3 text-center">
-                  <p className="text-2xl font-bold text-emerald-400">৳{(stats?.total_raised || 0).toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-emerald-400">৳{formatExact(stats?.total_raised || 0)}</p>
                   <p className="text-slate-400 text-xs uppercase tracking-wide mt-1">Collected</p>
                 </div>
                 <div className="bg-white/5 rounded-lg p-3 text-center">
-                  <p className="text-2xl font-bold text-white">৳{project.target_amount.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-white">৳{formatExact(project.target_amount)}</p>
                   <p className="text-slate-400 text-xs uppercase tracking-wide mt-1">Target</p>
                 </div>
                 <div className="bg-white/5 rounded-lg p-3 text-center">
@@ -296,11 +297,6 @@ function ProjectDetailContent() {
                   { id: 'overview', label: 'Overview', icon: (
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  )},
-                  { id: 'donate', label: 'Donate Now', icon: (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                   )},
                   { id: 'contributions', label: 'Contributions', icon: (
@@ -353,7 +349,7 @@ function ProjectDetailContent() {
                   {/* Summary Stats Cards */}
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200">
-                      <p className="text-2xl md:text-3xl font-bold text-emerald-600">৳{(stats?.total_raised || 0).toLocaleString()}</p>
+                      <p className="text-2xl md:text-3xl font-bold text-emerald-600">৳{formatExact(stats?.total_raised || 0)}</p>
                       <p className="text-sm text-emerald-700 mt-1">Total Collected</p>
                     </div>
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
@@ -365,7 +361,7 @@ function ProjectDetailContent() {
                       <p className="text-sm text-purple-700 mt-1">Contributors</p>
                     </div>
                     <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200">
-                      <p className="text-2xl md:text-3xl font-bold text-amber-600">৳{distributionStats?.total_distributed?.toLocaleString() || 0}</p>
+                      <p className="text-2xl md:text-3xl font-bold text-amber-600">৳{formatExact(distributionStats?.total_distributed || 0)}</p>
                       <p className="text-sm text-amber-700 mt-1">Distributed</p>
                     </div>
                     <div className="bg-gradient-to-br from-rose-50 to-rose-100 rounded-xl p-4 border border-rose-200">
@@ -379,15 +375,15 @@ function ProjectDetailContent() {
                     <h3 className="text-lg font-semibold mb-4">Fund Flow Summary</h3>
                     <div className="grid grid-cols-3 gap-4">
                       <div className="text-center">
-                        <p className="text-3xl font-bold text-emerald-400">৳{(stats?.total_raised || 0).toLocaleString()}</p>
+                        <p className="text-3xl font-bold text-emerald-400">৳{formatExact(stats?.total_raised || 0)}</p>
                         <p className="text-slate-400 text-sm mt-1">Collected</p>
                       </div>
                       <div className="text-center border-x border-slate-700">
-                        <p className="text-3xl font-bold text-amber-400">৳{(distributionStats?.total_distributed || 0).toLocaleString()}</p>
+                        <p className="text-3xl font-bold text-amber-400">৳{formatExact(distributionStats?.total_distributed || 0)}</p>
                         <p className="text-slate-400 text-sm mt-1">Distributed</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-3xl font-bold text-cyan-400">৳{((stats?.total_raised || 0) - (distributionStats?.total_distributed || 0)).toLocaleString()}</p>
+                        <p className="text-3xl font-bold text-cyan-400">৳{formatExact((stats?.total_raised || 0) - (distributionStats?.total_distributed || 0))}</p>
                         <p className="text-slate-400 text-sm mt-1">Available</p>
                       </div>
                     </div>
@@ -432,7 +428,7 @@ function ProjectDetailContent() {
                                 <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                               ))}
                             </Pie>
-                            <Tooltip formatter={(value: number) => `৳${value.toLocaleString()}`} />
+                            <Tooltip formatter={(value: number) => `৳${formatExact(value)}`} />
                             <Legend />
                           </PieChart>
                         </ResponsiveContainer>
@@ -466,7 +462,7 @@ function ProjectDetailContent() {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis type="number" tickFormatter={(v) => `৳${(v/1000).toFixed(0)}k`} />
                             <YAxis type="category" dataKey="name" width={80} />
-                            <Tooltip formatter={(value: number) => `৳${value.toLocaleString()}`} />
+                            <Tooltip formatter={(value: number) => `৳${formatExact(value)}`} />
                             <Bar dataKey="amount" fill="#3b82f6" name="Amount (BDT)" radius={[0, 4, 4, 0]} />
                           </BarChart>
                         </ResponsiveContainer>
@@ -500,7 +496,7 @@ function ProjectDetailContent() {
                             />
                             <YAxis tickFormatter={(v) => `৳${(v/1000).toFixed(0)}k`} />
                             <Tooltip 
-                              formatter={(value: number) => `৳${value.toLocaleString()}`}
+                              formatter={(value: number) => `৳${formatExact(value)}`}
                               labelFormatter={(label) => new Date(label).toLocaleDateString()}
                             />
                             <Area type="monotone" dataKey="total" stroke="#10b981" fillOpacity={1} fill="url(#colorTotal)" name="Amount" />
@@ -523,7 +519,7 @@ function ProjectDetailContent() {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="name" />
                             <YAxis tickFormatter={(v) => `৳${(v/1000).toFixed(0)}k`} />
-                            <Tooltip formatter={(value: number) => `৳${value.toLocaleString()}`} />
+                            <Tooltip formatter={(value: number) => `৳${formatExact(value)}`} />
                             <Legend />
                             <Bar dataKey="amount" fill="#8b5cf6" name="Total Amount" radius={[4, 4, 0, 0]} />
                           </BarChart>
@@ -558,7 +554,7 @@ function ProjectDetailContent() {
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="type" angle={-20} textAnchor="end" height={80} />
                           <YAxis tickFormatter={(v) => `৳${(v/1000).toFixed(0)}k`} />
-                          <Tooltip formatter={(value: number) => `৳${value.toLocaleString()}`} />
+                          <Tooltip formatter={(value: number) => `৳${formatExact(value)}`} />
                           <Legend />
                           <Bar dataKey="amount" fill="#f59e0b" name="Distributed Amount" radius={[4, 4, 0, 0]} />
                         </BarChart>
@@ -566,148 +562,32 @@ function ProjectDetailContent() {
                     </div>
                   )}
 
-                  {/* Recent Activity Summary */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Recent Contributions */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Contributions</h3>
-                      {contributions.length > 0 ? (
-                        <div className="space-y-3">
-                          {contributions.slice(0, 5).map((c, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-semibold text-sm">
-                                  {c.contributor_name.charAt(0).toUpperCase()}
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-900 text-sm">{c.contributor_name}</p>
-                                  <p className="text-xs text-gray-500">{c.payment_mode}</p>
-                                </div>
+                  {/* Recent Distributions */}
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Distributions</h3>
+                    {distributions.length > 0 ? (
+                      <div className="space-y-3">
+                        {distributions.slice(0, 5).map((d, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 font-semibold text-sm">
+                                {d.institution_name.charAt(0).toUpperCase()}
                               </div>
-                              <div className="text-right">
-                                <p className="font-semibold text-emerald-600">৳{c.amount.toLocaleString()}</p>
-                                <p className="text-xs text-gray-400">{new Date(c.contribution_date).toLocaleDateString()}</p>
+                              <div>
+                                <p className="font-medium text-gray-900 text-sm">{d.institution_name.substring(0, 20)}</p>
+                                <p className="text-xs text-gray-500">{d.institution_type}</p>
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-gray-400 text-center py-8">No contributions yet</p>
-                      )}
-                    </div>
-
-                    {/* Recent Distributions */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Distributions</h3>
-                      {distributions.length > 0 ? (
-                        <div className="space-y-3">
-                          {distributions.slice(0, 5).map((d, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 font-semibold text-sm">
-                                  {d.institution_name.charAt(0).toUpperCase()}
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-900 text-sm">{d.institution_name.substring(0, 20)}</p>
-                                  <p className="text-xs text-gray-500">{d.institution_type}</p>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <p className="font-semibold text-amber-600">৳{d.distributed_amount.toLocaleString()}</p>
-                                <p className="text-xs text-gray-400">{new Date(d.distribution_date).toLocaleDateString()}</p>
-                              </div>
+                            <div className="text-right">
+                              <p className="font-semibold text-amber-600">৳{formatExact(d.distributed_amount)}</p>
+                              <p className="text-xs text-gray-400">{new Date(d.distribution_date).toLocaleDateString()}</p>
                             </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-gray-400 text-center py-8">No distributions yet</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Donate Now Tab */}
-              {activeTab === 'donate' && (
-                <div>
-                  <div className="max-w-2xl mx-auto">
-                    <div className="text-center mb-8">
-                      <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
+                          </div>
+                        ))}
                       </div>
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Support This Project</h2>
-                      <p className="text-gray-600">Your contribution makes a difference</p>
-                    </div>
-
-                    {/* Project Info Card */}
-                    <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 text-white mb-6">
-                      <h3 className="text-xl font-bold mb-2">{project.name}</h3>
-                      {project.description && <p className="text-slate-300 text-sm mb-4">{project.description}</p>}
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="text-sm text-slate-400">Goal</p>
-                          <p className="text-2xl font-bold">৳{project.target_amount.toLocaleString()}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-slate-400">Raised</p>
-                          <p className="text-2xl font-bold text-emerald-400">৳{(stats?.total_raised || 0).toLocaleString()}</p>
-                        </div>
-                      </div>
-                      <div className="mt-4">
-                        <div className="w-full bg-slate-700 rounded-full h-3">
-                          <div
-                            className="bg-gradient-to-r from-emerald-500 to-emerald-400 h-3 rounded-full"
-                            style={{ width: `${progress}%` }}
-                          />
-                        </div>
-                        <p className="text-sm text-slate-400 mt-2">{progress.toFixed(1)}% of goal reached</p>
-                      </div>
-                    </div>
-
-                    {/* Donation Options */}
-                    <div className="bg-gray-50 rounded-xl p-6">
-                      <h3 className="font-semibold text-gray-900 mb-4">How to Donate</h3>
-                      <div className="space-y-4">
-                        <div className="flex items-start gap-4 p-4 bg-white rounded-lg border border-gray-200">
-                          <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">Bank Transfer</p>
-                            <p className="text-sm text-gray-600">Transfer directly to our fund account</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-4 p-4 bg-white rounded-lg border border-gray-200">
-                          <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <svg className="w-5 h-5 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">Mobile Banking (bKash, Nagad)</p>
-                            <p className="text-sm text-gray-600">Quick and easy mobile payments</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-4 p-4 bg-white rounded-lg border border-gray-200">
-                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">Contact Fund Admin</p>
-                            <p className="text-sm text-gray-600">Reach out to a team member for assistance</p>
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-4 text-center">
-                        Contact a fund administrator for donation details and confirmation.
-                      </p>
-                    </div>
+                    ) : (
+                      <p className="text-gray-400 text-center py-8">No distributions yet</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -754,7 +634,7 @@ function ProjectDetailContent() {
                                 </div>
                               </td>
                               <td className="py-4 px-4">
-                                <span className="font-semibold text-emerald-600">৳{contribution.amount.toLocaleString()}</span>
+                                <span className="font-semibold text-emerald-600">৳{formatExact(contribution.amount)}</span>
                               </td>
                               <td className="py-4 px-4">
                                 <span className="text-gray-600">{contribution.payment_mode}</span>
@@ -813,7 +693,7 @@ function ProjectDetailContent() {
                   {distributionStats && (
                     <div className="grid grid-cols-3 gap-4 mb-6">
                       <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4">
-                        <p className="text-2xl font-bold text-amber-600">৳{distributionStats.total_distributed.toLocaleString()}</p>
+                        <p className="text-2xl font-bold text-amber-600">৳{formatExact(distributionStats.total_distributed)}</p>
                         <p className="text-sm text-amber-700 mt-1">Total Distributed</p>
                       </div>
                       <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
@@ -936,7 +816,7 @@ function ProjectDetailContent() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="text-xl font-bold text-amber-600">৳{dist.distributed_amount.toLocaleString()}</p>
+                              <p className="text-xl font-bold text-amber-600">৳{formatExact(dist.distributed_amount)}</p>
                               <p className="text-sm text-gray-500">{new Date(dist.distribution_date).toLocaleDateString()}</p>
                             </div>
                           </div>

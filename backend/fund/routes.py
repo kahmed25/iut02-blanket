@@ -1033,25 +1033,31 @@ async def assign_project_to_user(
     user = auth_db.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     # Check user is a fund admin
     if user.get('role') != ROLE_FUND_ADMIN:
         raise HTTPException(
             status_code=400,
-            detail="Can only assign projects to Fund Admin users"
+            detail=f"Can only assign projects to Fund Admin users. Current role: {user.get('role', 'unknown')}"
         )
-    
+
     # Check project exists
     project = fund_db.get_project_by_id(assignment.project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     success = auth_db.assign_project_to_user(user_id, assignment.project_id)
-    
+
     if not success:
         raise HTTPException(status_code=500, detail="Failed to assign project")
-    
-    return {"success": True, "message": f"Project assigned to user"}
+
+    # Return updated user data
+    updated_user = auth_db.get_user_by_id(user_id)
+    if updated_user:
+        updated_user.pop('provider_id', None)
+        updated_user.pop('password_hash', None)
+
+    return {"success": True, "message": "Project assigned to user", "user": updated_user}
 
 
 @router.delete("/users/{user_id}/unassign-project")
@@ -1064,13 +1070,19 @@ async def unassign_project_from_user(
     user = auth_db.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     success = auth_db.unassign_project_from_user(user_id, project_id)
-    
+
     if not success:
         raise HTTPException(status_code=500, detail="Failed to unassign project")
-    
-    return {"success": True, "message": "Project unassigned from user"}
+
+    # Return updated user data
+    updated_user = auth_db.get_user_by_id(user_id)
+    if updated_user:
+        updated_user.pop('provider_id', None)
+        updated_user.pop('password_hash', None)
+
+    return {"success": True, "message": "Project unassigned from user", "user": updated_user}
 
 
 # =============================================================================

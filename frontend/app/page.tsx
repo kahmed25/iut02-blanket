@@ -11,6 +11,7 @@ import Tabs from '@/components/Tabs';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/auth/hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import { formatExact } from '@/utils/formatNumber';
 
 export default function Home() {
   const { user, isAuthenticated, logout, loading: authLoading } = useAuth();
@@ -236,7 +237,7 @@ export default function Home() {
                 {/* Stats Row */}
                 <div className="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8 mt-8 sm:mt-12">
                   <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 sm:p-6 min-w-[120px] sm:min-w-[140px]">
-                    <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-emerald-400">৳{totalRaised.toLocaleString()}</p>
+                    <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-emerald-400">৳{formatExact(totalRaised)}</p>
                     <p className="text-slate-400 text-xs sm:text-sm uppercase tracking-wide mt-1">Total Raised</p>
                   </div>
                   <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 sm:p-6 min-w-[120px] sm:min-w-[140px]">
@@ -447,11 +448,11 @@ export default function Home() {
                                 <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-700">
                                   <div>
                                     <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Raised</p>
-                                    <p className="text-2xl font-bold text-emerald-400">৳{(stats?.total_raised || 0).toLocaleString()}</p>
+                                    <p className="text-2xl font-bold text-emerald-400">৳{formatExact(stats?.total_raised || 0)}</p>
                                   </div>
                                   <div>
                                     <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Goal</p>
-                                    <p className="text-2xl font-bold text-white">৳{project.target_amount.toLocaleString()}</p>
+                                    <p className="text-2xl font-bold text-white">৳{formatExact(project.target_amount)}</p>
                                   </div>
                                 </div>
 

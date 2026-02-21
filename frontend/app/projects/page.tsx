@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { projectsApi, statsApi, Project, ProjectStats } from '@/services/fundApi';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/auth/hooks/useAuth';
+import { formatExact } from '@/utils/formatNumber';
 
 // Pagination component
 function Pagination({ totalItems, itemsPerPage, currentPage, onPageChange }: {
@@ -203,7 +204,7 @@ export default function ProjectsPage() {
               </div>
               <div className="mt-4 md:mt-0 flex gap-4">
                 <div className="bg-white/10 rounded-lg px-4 py-2 text-center">
-                  <p className="text-2xl font-bold text-emerald-400">৳{totalRaised.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-emerald-400">৳{formatExact(totalRaised)}</p>
                   <p className="text-xs text-slate-400 uppercase">Total Raised</p>
                 </div>
                 <div className="bg-white/10 rounded-lg px-4 py-2 text-center">
@@ -387,11 +388,11 @@ export default function ProjectsPage() {
                               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
                                 <div>
                                   <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Raised</p>
-                                  <p className="text-xl font-bold text-emerald-600">৳{(stats?.total_raised || 0).toLocaleString()}</p>
+                                  <p className="text-xl font-bold text-emerald-600">৳{formatExact(stats?.total_raised || 0)}</p>
                                 </div>
                                 <div>
                                   <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Goal</p>
-                                  <p className="text-xl font-bold text-gray-900">৳{project.target_amount.toLocaleString()}</p>
+                                  <p className="text-xl font-bold text-gray-900">৳{formatExact(project.target_amount)}</p>
                                 </div>
                               </div>
 
@@ -494,11 +495,11 @@ export default function ProjectsPage() {
                       <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
                         <div>
                           <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Raised</p>
-                          <p className="text-xl font-bold text-emerald-600">৳{(stats?.total_raised || 0).toLocaleString()}</p>
+                          <p className="text-xl font-bold text-emerald-600">৳{formatExact(stats?.total_raised || 0)}</p>
                         </div>
                         <div>
                           <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Goal</p>
-                          <p className="text-xl font-bold text-gray-900">৳{project.target_amount.toLocaleString()}</p>
+                          <p className="text-xl font-bold text-gray-900">৳{formatExact(project.target_amount)}</p>
                         </div>
                       </div>
 

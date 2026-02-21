@@ -3,18 +3,22 @@ Phase 6: Media Management API Routes
 Upload, retrieve, update, and delete media for projects
 """
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from pathlib import Path
 import shutil
 import mimetypes
 import os
+import logging
 
 from fund.models import fund_db
 from middleware.auth_middleware import (
     get_current_user, require_admin, require_fund_admin_or_above
 )
+from auth.auth_config import ENVIRONMENT, S3_MEDIA_BUCKET, S3_REGION
+
+logger = logging.getLogger(__name__)
 
 # Create router
 router = APIRouter(prefix="/api/media", tags=["media"])
@@ -22,6 +26,16 @@ router = APIRouter(prefix="/api/media", tags=["media"])
 # Configuration
 BASE_DIR = Path(__file__).parent.parent
 UPLOADS_DIR = BASE_DIR / "uploads"
+
+# S3 client for AWS environment
+s3_client = None
+if ENVIRONMENT != "local":
+    try:
+        import boto3
+        s3_client = boto3.client('s3', region_name=S3_REGION)
+        logger.info(f"S3 client initialized for bucket: {S3_MEDIA_BUCKET}")
+    except Exception as e:
+        logger.error(f"Failed to initialize S3 client: {e}")
 
 # Supported file types with max sizes (in bytes)
 SUPPORTED_MEDIA = {
@@ -77,6 +91,13 @@ def ensure_upload_dirs():
         (UPLOADS_DIR / f"{media_type}s").mkdir(parents=True, exist_ok=True)
 
 
+def get_media_url(file_key: str) -> str:
+    """Get the appropriate URL for a media file based on environment"""
+    if ENVIRONMENT != "local" and s3_client:
+        return f"https://{S3_MEDIA_BUCKET}.s3.{S3_REGION}.amazonaws.com/{file_key}"
+    return f"/uploads/{file_key}"
+
+
 # =============================================================================
 # Pydantic Models
 # =============================================================================
@@ -109,12 +130,13 @@ async def upload_media(
     """
     Upload a media file for a project.
     Fund Admins can only upload to their assigned projects.
+    Uses S3 for storage in AWS, local filesystem in development.
     """
     # Check project exists
     project = fund_db.get_project_by_id(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     # Check project access for fund_admin
     user_role = current_user.get('role', 'user')
     if user_role == 'fund_admin':
@@ -127,37 +149,56 @@ async def upload_media(
                 assigned = []
         if project_id not in assigned:
             raise HTTPException(status_code=403, detail="You don't have access to this project")
-    
+
     # Read file content to get size
     content = await file.read()
     file_size = len(content)
-    
+
     # Validate file
     media_type, error = validate_file(file.filename, file.content_type, file_size)
     if error:
         raise HTTPException(status_code=400, detail=error)
-    
-    # Ensure directories exist
-    ensure_upload_dirs()
-    
+
     # Generate file key (path within uploads)
     import uuid
     file_ext = Path(file.filename).suffix.lower()
     unique_filename = f"{uuid.uuid4()}{file_ext}"
     file_key = f"{media_type}s/{project_id}/{unique_filename}"
-    
-    # Create project directory
-    project_dir = UPLOADS_DIR / f"{media_type}s" / project_id
-    project_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Save file
-    file_path = UPLOADS_DIR / file_key
-    with open(file_path, "wb") as f:
-        f.write(content)
-    
+
     # Get mime type
     mime_type = file.content_type or mimetypes.guess_type(file.filename)[0] or "application/octet-stream"
-    
+
+    # Save file - use S3 in AWS, local filesystem in development
+    if ENVIRONMENT != "local" and s3_client:
+        try:
+            # Upload to S3
+            s3_client.put_object(
+                Bucket=S3_MEDIA_BUCKET,
+                Key=file_key,
+                Body=content,
+                ContentType=mime_type
+            )
+            logger.info(f"File uploaded to S3: {file_key}")
+            # URL for S3 - use presigned URL or CloudFront in production
+            url = f"https://{S3_MEDIA_BUCKET}.s3.{S3_REGION}.amazonaws.com/{file_key}"
+        except Exception as e:
+            logger.error(f"S3 upload failed: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to upload file to S3: {str(e)}")
+    else:
+        # Ensure directories exist (local)
+        ensure_upload_dirs()
+
+        # Create project directory
+        project_dir = UPLOADS_DIR / f"{media_type}s" / project_id
+        project_dir.mkdir(parents=True, exist_ok=True)
+
+        # Save file locally
+        file_path = UPLOADS_DIR / file_key
+        with open(file_path, "wb") as f:
+            f.write(content)
+
+        url = f"/uploads/{file_key}"
+
     # Create database record
     media = fund_db.create_media(
         project_id=project_id,
@@ -169,10 +210,10 @@ async def upload_media(
         uploaded_by=current_user['user_id'],
         caption=caption
     )
-    
+
     # Add URL to response
-    media['url'] = f"/uploads/{file_key}"
-    
+    media['url'] = url
+
     return {"success": True, "media": media}
 
 
@@ -189,10 +230,10 @@ async def list_project_media(
         raise HTTPException(status_code=404, detail="Project not found")
     
     media_list = fund_db.get_media_by_project(project_id, media_type)
-    
+
     # Add URLs to each media item
     for media in media_list:
-        media['url'] = f"/uploads/{media['file_key']}"
+        media['url'] = get_media_url(media['file_key'])
     
     # Get counts
     counts = fund_db.get_media_count_by_project(project_id)
@@ -213,10 +254,10 @@ async def get_media(
     media = fund_db.get_media_by_id(media_id)
     if not media:
         raise HTTPException(status_code=404, detail="Media not found")
-    
+
     # Add URL
-    media['url'] = f"/uploads/{media['file_key']}"
-    
+    media['url'] = get_media_url(media['file_key'])
+
     return {"success": True, "media": media}
 
 
@@ -225,20 +266,38 @@ async def get_media_file(media_id: str):
     """
     Get the actual media file.
     This is public to allow embedding in pages.
+    In AWS, redirects to S3 URL. In local, serves from filesystem.
     """
     media = fund_db.get_media_by_id(media_id)
     if not media:
         raise HTTPException(status_code=404, detail="Media not found")
-    
-    file_path = UPLOADS_DIR / media['file_key']
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found")
-    
-    return FileResponse(
-        path=file_path,
-        media_type=media['mime_type'],
-        filename=media['file_name']
-    )
+
+    if ENVIRONMENT != "local" and s3_client:
+        # In AWS, fetch from S3 and return
+        try:
+            response = s3_client.get_object(Bucket=S3_MEDIA_BUCKET, Key=media['file_key'])
+            content = response['Body'].read()
+            return Response(
+                content=content,
+                media_type=media['mime_type'],
+                headers={
+                    "Content-Disposition": f'inline; filename="{media["file_name"]}"'
+                }
+            )
+        except Exception as e:
+            logger.error(f"S3 get failed: {e}")
+            raise HTTPException(status_code=404, detail="File not found in S3")
+    else:
+        # Local filesystem
+        file_path = UPLOADS_DIR / media['file_key']
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="File not found")
+
+        return FileResponse(
+            path=file_path,
+            media_type=media['mime_type'],
+            filename=media['file_name']
+        )
 
 
 @router.patch("/{media_id}")
@@ -274,8 +333,8 @@ async def update_media(
         raise HTTPException(status_code=500, detail="Failed to update media")
     
     updated = fund_db.get_media_by_id(media_id)
-    updated['url'] = f"/uploads/{updated['file_key']}"
-    
+    updated['url'] = get_media_url(updated['file_key'])
+
     return {"success": True, "media": updated}
 
 
@@ -302,11 +361,20 @@ async def delete_media(
         if media['project_id'] not in assigned:
             raise HTTPException(status_code=403, detail="You don't have access to this media")
     
-    # Delete file from disk
-    file_path = UPLOADS_DIR / media['file_key']
-    if file_path.exists():
-        file_path.unlink()
-    
+    # Delete file from storage
+    if ENVIRONMENT != "local" and s3_client:
+        # Delete from S3
+        try:
+            s3_client.delete_object(Bucket=S3_MEDIA_BUCKET, Key=media['file_key'])
+            logger.info(f"Deleted from S3: {media['file_key']}")
+        except Exception as e:
+            logger.warning(f"Failed to delete from S3: {e}")
+    else:
+        # Delete from local disk
+        file_path = UPLOADS_DIR / media['file_key']
+        if file_path.exists():
+            file_path.unlink()
+
     # Delete database record
     success = fund_db.delete_media(media_id)
     if not success:

@@ -518,7 +518,8 @@ export const usersApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify({ project_id: projectId }),
     });
-    return handleResponse<UserWithRole>(response);
+    const data = await handleResponse<{ success: boolean; message: string; user: UserWithRole }>(response);
+    return data.user;
   },
 
   async unassignProject(userId: string, projectId: string): Promise<UserWithRole> {
@@ -526,7 +527,8 @@ export const usersApi = {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
-    return handleResponse<UserWithRole>(response);
+    const data = await handleResponse<{ success: boolean; message: string; user: UserWithRole }>(response);
+    return data.user;
   },
 };
 

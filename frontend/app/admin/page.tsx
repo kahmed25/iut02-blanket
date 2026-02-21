@@ -190,11 +190,12 @@ function AdminDashboard() {
   const handleAssignProject = async (userId: string, projectId: string) => {
     try {
       setUserFormLoading(true);
-      await usersApi.assignProject(userId, projectId);
+      const updatedUser = await usersApi.assignProject(userId, projectId);
       await loadData();
-      // Update editing user with new data
-      const updatedUser = users.find(u => u.user_id === userId);
-      if (updatedUser) setEditingUser(updatedUser);
+      // Update editing user with returned data from API
+      if (updatedUser && editingUser?.user_id === userId) {
+        setEditingUser(updatedUser);
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to assign project');
     } finally {
@@ -206,8 +207,12 @@ function AdminDashboard() {
   const handleUnassignProject = async (userId: string, projectId: string) => {
     try {
       setUserFormLoading(true);
-      await usersApi.unassignProject(userId, projectId);
+      const updatedUser = await usersApi.unassignProject(userId, projectId);
       await loadData();
+      // Update editing user with returned data from API
+      if (updatedUser && editingUser?.user_id === userId) {
+        setEditingUser(updatedUser);
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to unassign project');
     } finally {
@@ -331,7 +336,7 @@ function AdminDashboard() {
                 />
                 <StatsCard
                   title="Total Amount"
-                  value={summary?.total_amount?.toLocaleString() || 0}
+                  value={summary?.total_amount || 0}
                   subtitle="BDT"
                   color="purple"
                   icon={

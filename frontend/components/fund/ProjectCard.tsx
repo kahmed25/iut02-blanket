@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Project, ProjectStats } from '@/services/fundApi';
+import { formatExact } from '@/utils/formatNumber';
 
 interface ProjectCardProps {
   project: Project;
@@ -76,14 +77,14 @@ export function ProjectCard({
               <div>
                 <p className="text-xs text-gray-500">Collected</p>
                 <p className="text-lg font-semibold text-gray-900">
-                  {stats.total_raised?.toLocaleString() || 0}
+                  {formatExact(stats.total_raised || 0)}
                   <span className="text-sm text-gray-500 ml-1">{stats.target_currency}</span>
                 </p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">Target</p>
                 <p className="text-lg font-semibold text-gray-900">
-                  {project.target_amount.toLocaleString()}
+                  {formatExact(project.target_amount)}
                   <span className="text-sm text-gray-500 ml-1">{project.target_currency}</span>
                 </p>
               </div>
