@@ -91,10 +91,11 @@ def ensure_upload_dirs():
         (UPLOADS_DIR / f"{media_type}s").mkdir(parents=True, exist_ok=True)
 
 
-def get_media_url(file_key: str) -> str:
+def get_media_url(file_key: str, media_id: str = None) -> str:
     """Get the appropriate URL for a media file based on environment"""
-    if ENVIRONMENT != "local" and s3_client:
-        return f"https://{S3_MEDIA_BUCKET}.s3.{S3_REGION}.amazonaws.com/{file_key}"
+    # Always use API endpoint to serve files (handles both local and S3)
+    if media_id:
+        return f"/api/media/file/{media_id}"
     return f"/uploads/{file_key}"
 
 
@@ -211,8 +212,8 @@ async def upload_media(
         caption=caption
     )
 
-    # Add URL to response
-    media['url'] = url
+    # Add URL to response - use API endpoint for serving files
+    media['url'] = get_media_url(file_key, media['media_id'])
 
     return {"success": True, "media": media}
 
@@ -233,7 +234,7 @@ async def list_project_media(
 
     # Add URLs to each media item
     for media in media_list:
-        media['url'] = get_media_url(media['file_key'])
+        media['url'] = get_media_url(media['file_key'], media['media_id'])
     
     # Get counts
     counts = fund_db.get_media_count_by_project(project_id)
@@ -256,7 +257,7 @@ async def get_media(
         raise HTTPException(status_code=404, detail="Media not found")
 
     # Add URL
-    media['url'] = get_media_url(media['file_key'])
+    media['url'] = get_media_url(media['file_key'], media['media_id'])
 
     return {"success": True, "media": media}
 
@@ -333,7 +334,7 @@ async def update_media(
         raise HTTPException(status_code=500, detail="Failed to update media")
     
     updated = fund_db.get_media_by_id(media_id)
-    updated['url'] = get_media_url(updated['file_key'])
+    updated['url'] = get_media_url(updated['file_key'], updated['media_id'])
 
     return {"success": True, "media": updated}
 
