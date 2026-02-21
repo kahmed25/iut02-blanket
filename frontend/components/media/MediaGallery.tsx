@@ -9,8 +9,6 @@ interface MediaGalleryProps {
   onMediaDeleted?: () => void;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
 export default function MediaGallery({ projectId, canManage = false, onMediaDeleted }: MediaGalleryProps) {
   const [media, setMedia] = useState<Media[]>([]);
   const [counts, setCounts] = useState<MediaCounts>({ image: 0, video: 0, audio: 0, total: 0 });
@@ -136,7 +134,7 @@ export default function MediaGallery({ projectId, canManage = false, onMediaDele
           >
             {item.media_type === 'image' && (
               <img
-                src={`${API_URL}/uploads/${item.file_key}`}
+                src={item.url}
                 alt={item.caption || item.file_name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
@@ -144,7 +142,7 @@ export default function MediaGallery({ projectId, canManage = false, onMediaDele
             {item.media_type === 'video' && (
               <div className="w-full h-full flex items-center justify-center bg-gray-800">
                 <video
-                  src={`${API_URL}/uploads/${item.file_key}`}
+                  src={item.url}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -212,14 +210,14 @@ export default function MediaGallery({ projectId, canManage = false, onMediaDele
           >
             {selectedMedia.media_type === 'image' && (
               <img
-                src={`${API_URL}/uploads/${selectedMedia.file_key}`}
+                src={selectedMedia.url}
                 alt={selectedMedia.caption || selectedMedia.file_name}
                 className="max-w-full max-h-[80vh] mx-auto rounded-lg"
               />
             )}
             {selectedMedia.media_type === 'video' && (
               <video
-                src={`${API_URL}/uploads/${selectedMedia.file_key}`}
+                src={selectedMedia.url}
                 controls
                 autoPlay
                 className="max-w-full max-h-[80vh] mx-auto rounded-lg"
@@ -234,7 +232,7 @@ export default function MediaGallery({ projectId, canManage = false, onMediaDele
                 </div>
                 <h3 className="text-lg font-semibold text-center mb-4">{selectedMedia.file_name}</h3>
                 <audio
-                  src={`${API_URL}/uploads/${selectedMedia.file_key}`}
+                  src={selectedMedia.url}
                   controls
                   autoPlay
                   className="w-full"

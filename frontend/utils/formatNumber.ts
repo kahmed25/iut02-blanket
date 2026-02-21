@@ -39,31 +39,20 @@ export function formatCurrency(
 }
 
 /**
- * Format a number preserving all its decimal places as stored
- * This shows the exact value from the database without rounding
+ * Format a number as whole number (no decimals) with thousand separators
+ * This is the default for currency display - shows clean whole numbers
  *
  * @param value - The number to format
- * @returns Formatted string preserving original decimals
+ * @returns Formatted string with thousand separators, no decimals
  */
 export function formatExact(value: number | undefined | null): string {
   if (value === undefined || value === null || isNaN(value)) {
     return '0';
   }
 
-  // Convert to string to check for decimals
-  const str = value.toString();
-  const decimalIndex = str.indexOf('.');
-
-  if (decimalIndex === -1) {
-    // No decimals, just add thousand separators
-    return new Intl.NumberFormat('en-US').format(value);
-  }
-
-  // Count decimal places in the original number
-  const decimalPlaces = str.length - decimalIndex - 1;
-
+  // Round to whole number and format with thousand separators
   return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: decimalPlaces,
-    maximumFractionDigits: decimalPlaces,
-  }).format(value);
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(Math.round(value));
 }
