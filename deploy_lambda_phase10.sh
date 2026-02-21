@@ -56,11 +56,11 @@ mkdir -p $DEPLOY_DIR
 # Install dependencies
 # First install binary packages with platform-specific wheels
 echo "📥 Installing Python dependencies (binary packages)..."
-pip install -r backend/requirements.txt --target $DEPLOY_DIR --platform manylinux2014_x86_64 --only-binary=:all: --python-version 3.11 --quiet 2>/dev/null || true
+pip3 install -r backend/requirements.txt --target $DEPLOY_DIR --platform manylinux2014_x86_64 --only-binary=:all: --python-version 3.11 --quiet 2>/dev/null || true
 
 # Then install pure-python packages that don't have platform-specific wheels
 echo "📥 Installing Python dependencies (pure-python packages)..."
-pip install email-validator dnspython idna --target $DEPLOY_DIR --quiet
+pip3 install email-validator dnspython idna --target $DEPLOY_DIR --quiet
 
 # Copy backend code - main files
 echo "📋 Copying backend code..."

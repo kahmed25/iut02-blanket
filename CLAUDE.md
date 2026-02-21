@@ -72,6 +72,12 @@ cd backend && python -m pytest tests/test_auth.py -v
 ./deploy_lambda_phase10.sh             # Deploy Lambda function
 ./backend/setup_dynamodb_phase10.sh    # Create DynamoDB tables
 ./backend/setup_s3_media.sh            # Setup S3 media bucket
+
+# Update Lambda environment variables (use complete-lambda-env.json as source of truth)
+aws lambda update-function-configuration \
+  --function-name iut02-blanket-api \
+  --environment file://complete-lambda-env.json \
+  --region ap-southeast-1
 ```
 
 ---
@@ -450,4 +456,15 @@ aws amplify start-job --app-id d1js9a712g4lw --branch-name dev --job-type RELEAS
 ### Deploy Changes
 1. **Frontend**: Push to `dev` branch (Amplify auto-deploys)
 2. **Backend**: Run `./deploy_lambda_phase10.sh`
-3. **Environment vars**: Use AWS CLI to update Lambda config
+3. **Environment vars**: Update Lambda using `complete-lambda-env.json`:
+   ```bash
+   aws lambda update-function-configuration \
+     --function-name iut02-blanket-api \
+     --environment file://complete-lambda-env.json \
+     --region ap-southeast-1
+   ```
+
+### Lambda Environment Configuration
+The `complete-lambda-env.json` file contains all production environment variables for the Lambda function. This file is the source of truth for Lambda configuration and should be used when updating environment variables.
+
+**Important**: This file contains sensitive credentials (OAuth secrets, JWT keys) and should NOT be committed to git. It's listed in `.gitignore`.
