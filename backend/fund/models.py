@@ -1250,17 +1250,17 @@ class DynamoDBFundDatabase:
         media_id = str(uuid.uuid4())
         now = datetime.utcnow().isoformat()
         
-        # Get max display_order
+        # Get max display_order - convert to int to avoid DynamoDB float error
         existing = self.get_media_by_project(project_id)
-        display_order = max([m.get('display_order', 0) for m in existing], default=-1) + 1
-        
+        display_order = int(max([m.get('display_order', 0) for m in existing], default=-1) + 1)
+
         item = {
             'media_id': media_id,
             'project_id': project_id,
             'media_type': media_type,
             'file_name': file_name,
             'file_key': file_key,
-            'file_size': file_size,
+            'file_size': int(file_size),  # Ensure int for DynamoDB
             'mime_type': mime_type,
             'caption': caption or '',
             'display_order': display_order,
@@ -1292,20 +1292,24 @@ class DynamoDBFundDatabase:
         
         items.sort(key=lambda x: (x.get('display_order', 0), x.get('created_at', '')))
         return [self._decimal_to_float(item) for item in items]
-    
+
     def update_media(self, media_id: str, **kwargs) -> bool:
         """Update media fields"""
         if not kwargs:
             return False
-        
+
         allowed_fields = ['caption', 'display_order']
         updates = {k: v for k, v in kwargs.items() if k in allowed_fields}
-        
+
         if not updates:
             return False
-        
+
+        # Ensure display_order is int for DynamoDB
+        if 'display_order' in updates and updates['display_order'] is not None:
+            updates['display_order'] = int(updates['display_order'])
+
         updates['updated_at'] = datetime.utcnow().isoformat()
-        
+
         update_expr = 'SET ' + ', '.join([f'#{k} = :{k}' for k in updates.keys()])
         expr_names = {f'#{k}': k for k in updates.keys()}
         expr_values = {f':{k}': v for k, v in updates.items()}

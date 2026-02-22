@@ -4,7 +4,7 @@ frontend:
     preBuild:
       commands:
         - cd frontend
-        - echo "NEXT_PUBLIC_API_URL=https://hz0qnbuf64.execute-api.ap-southeast-1.amazonaws.com" > .env.production
+        - echo "NEXT_PUBLIC_API_URL=https://d3el0rz8hgjk9d.cloudfront.net" > .env.production
         - cat .env.production
         - npm ci
     build:
