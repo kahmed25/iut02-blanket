@@ -10,10 +10,15 @@ import {
   Contribution,
   ProjectStats,
   UserWithRole,
+  Distribution,
+  DistributionStats,
+  DistributionCreate,
   projectsApi,
   contributionsApi,
   statsApi,
   usersApi,
+  distributionsApi,
+  fundApi,
 } from '@/services/fundApi';
 import {
   ProjectCard,
@@ -78,8 +83,24 @@ function FundAdminDashboard() {
   const [showMediaUploader, setShowMediaUploader] = useState(false);
   const [mediaRefreshKey, setMediaRefreshKey] = useState(0);
 
+  // Distribution state
+  const [distributions, setDistributions] = useState<Distribution[]>([]);
+  const [distributionStats, setDistributionStats] = useState<DistributionStats | null>(null);
+  const [showDistributionForm, setShowDistributionForm] = useState(false);
+  const [institutionTypes, setInstitutionTypes] = useState<string[]>([]);
+  const [distributionForm, setDistributionForm] = useState<Partial<DistributionCreate>>({
+    institution_type: '',
+    institution_name: '',
+    distributed_amount: 0,
+    currency: 'BDT',
+    distribution_date: new Date().toISOString().split('T')[0],
+    notes: '',
+  });
+  const [submittingDistribution, setSubmittingDistribution] = useState(false);
+  const [deletingDistribution, setDeletingDistribution] = useState<string | null>(null);
+
   // Tab state for main content
-  const [activeTab, setActiveTab] = useState<'contributions' | 'media' | 'team'>('contributions');
+  const [activeTab, setActiveTab] = useState<'contributions' | 'distribution' | 'media' | 'team'>('contributions');
 
   // Check if user can manage fund admins
   const canManageFundAdmins = role === 'super_admin' || role === 'admin';
@@ -91,10 +112,12 @@ function FundAdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load contributions when project changes
+  // Load contributions and distributions when project changes
   useEffect(() => {
     if (selectedProject) {
       loadProjectData(selectedProject.project_id);
+      loadDistributions(selectedProject.project_id);
+      loadInstitutionTypes();
     }
   }, [selectedProject]);
 
@@ -151,6 +174,81 @@ function FundAdminDashboard() {
       setAllUsers(users);
     } catch (err) {
       console.error('Failed to load users:', err);
+    }
+  };
+
+  const loadDistributions = async (projectId: string) => {
+    try {
+      const [distData, distStats] = await Promise.all([
+        distributionsApi.getAll(projectId),
+        distributionsApi.getStats(projectId),
+      ]);
+      setDistributions(distData);
+      setDistributionStats(distStats);
+    } catch (err) {
+      console.error('Error loading distributions:', err);
+    }
+  };
+
+  const loadInstitutionTypes = async () => {
+    try {
+      const types = await fundApi.config.getInstitutionTypes();
+      setInstitutionTypes(types);
+    } catch (err) {
+      console.error('Error loading institution types:', err);
+      setInstitutionTypes(['School', 'Orphanage', 'Hospital', 'Community Center', 'Religious Institution', 'NGO', 'Government Agency', 'Individual/Family', 'Other']);
+    }
+  };
+
+  const handleDistributionSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedProject || !distributionForm.institution_type || !distributionForm.institution_name || !distributionForm.distributed_amount) {
+      return;
+    }
+
+    setSubmittingDistribution(true);
+    try {
+      await distributionsApi.create({
+        project_id: selectedProject.project_id,
+        institution_type: distributionForm.institution_type,
+        institution_name: distributionForm.institution_name,
+        distributed_amount: distributionForm.distributed_amount,
+        currency: distributionForm.currency || 'BDT',
+        distribution_date: distributionForm.distribution_date || new Date().toISOString().split('T')[0],
+        notes: distributionForm.notes,
+      });
+      setShowDistributionForm(false);
+      setDistributionForm({
+        institution_type: '',
+        institution_name: '',
+        distributed_amount: 0,
+        currency: 'BDT',
+        distribution_date: new Date().toISOString().split('T')[0],
+        notes: '',
+      });
+      loadDistributions(selectedProject.project_id);
+    } catch (err) {
+      console.error('Error creating distribution:', err);
+      alert(err instanceof Error ? err.message : 'Failed to create distribution');
+    } finally {
+      setSubmittingDistribution(false);
+    }
+  };
+
+  const handleDeleteDistribution = async (distributionId: string) => {
+    if (!confirm('Are you sure you want to delete this distribution? This action cannot be undone.')) return;
+    if (!selectedProject) return;
+
+    setDeletingDistribution(distributionId);
+    try {
+      await distributionsApi.delete(distributionId);
+      setDistributions(prev => prev.filter(d => d.distribution_id !== distributionId));
+      loadDistributions(selectedProject.project_id);
+    } catch (err) {
+      console.error('Error deleting distribution:', err);
+      alert(err instanceof Error ? err.message : 'Failed to delete distribution');
+    } finally {
+      setDeletingDistribution(null);
     }
   };
 
@@ -435,6 +533,11 @@ function FundAdminDashboard() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         )},
+                        { id: 'distribution', label: 'Distribution', icon: (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                          </svg>
+                        )},
                         { id: 'media', label: 'Media Gallery', icon: (
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -489,6 +592,190 @@ function FundAdminDashboard() {
                           onEdit={(c) => setEditingContribution(c)}
                           onDelete={(c) => setDeleteContribution(c)}
                         />
+                      </div>
+                    )}
+
+                    {/* Distribution Tab */}
+                    {activeTab === 'distribution' && (
+                      <div>
+                        <div className="flex items-center justify-between mb-6">
+                          <div>
+                            <h2 className="text-lg font-semibold text-gray-900">Fund Distribution</h2>
+                            <p className="text-sm text-gray-500">Track how funds have been distributed</p>
+                          </div>
+                          <button
+                            onClick={() => setShowDistributionForm(!showDistributionForm)}
+                            className={`px-4 py-2 rounded-lg font-medium transition-all shadow-sm hover:shadow-md flex items-center text-sm ${
+                              showDistributionForm
+                                ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-700 hover:to-orange-700'
+                            }`}
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              {showDistributionForm ? (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              ) : (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                              )}
+                            </svg>
+                            {showDistributionForm ? 'Cancel' : 'Add Distribution'}
+                          </button>
+                        </div>
+
+                        {/* Distribution Stats */}
+                        {distributionStats && (
+                          <div className="grid grid-cols-3 gap-4 mb-6">
+                            <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4">
+                              <p className="text-2xl font-bold text-amber-600">৳{formatExact(distributionStats.total_distributed)}</p>
+                              <p className="text-sm text-amber-700 mt-1">Total Distributed</p>
+                            </div>
+                            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
+                              <p className="text-2xl font-bold text-blue-600">{distributionStats.total_distributions}</p>
+                              <p className="text-sm text-blue-700 mt-1">Distributions</p>
+                            </div>
+                            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4">
+                              <p className="text-2xl font-bold text-purple-600">{distributionStats.unique_institutions}</p>
+                              <p className="text-sm text-purple-700 mt-1">Institutions</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Add Distribution Form */}
+                        {showDistributionForm && (
+                          <form onSubmit={handleDistributionSubmit} className="mb-6 bg-gray-50 rounded-xl p-6">
+                            <h3 className="font-semibold text-gray-900 mb-4">Add New Distribution</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Institution Type *</label>
+                                <select
+                                  value={distributionForm.institution_type || ''}
+                                  onChange={(e) => setDistributionForm({ ...distributionForm, institution_type: e.target.value })}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                  required
+                                >
+                                  <option value="">Select type...</option>
+                                  {institutionTypes.map((type) => (
+                                    <option key={type} value={type}>{type}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Institution Name *</label>
+                                <input
+                                  type="text"
+                                  value={distributionForm.institution_name || ''}
+                                  onChange={(e) => setDistributionForm({ ...distributionForm, institution_name: e.target.value })}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                  placeholder="Enter institution name"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Amount *</label>
+                                <input
+                                  type="number"
+                                  value={distributionForm.distributed_amount || ''}
+                                  onChange={(e) => setDistributionForm({ ...distributionForm, distributed_amount: parseFloat(e.target.value) })}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                  placeholder="0.00"
+                                  min="0"
+                                  step="0.01"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Distribution Date *</label>
+                                <input
+                                  type="date"
+                                  value={distributionForm.distribution_date || ''}
+                                  onChange={(e) => setDistributionForm({ ...distributionForm, distribution_date: e.target.value })}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                  required
+                                />
+                              </div>
+                              <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                                <textarea
+                                  value={distributionForm.notes || ''}
+                                  onChange={(e) => setDistributionForm({ ...distributionForm, notes: e.target.value })}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                  placeholder="Add any notes or comments..."
+                                  rows={2}
+                                />
+                              </div>
+                            </div>
+                            <div className="mt-4 flex justify-end gap-3">
+                              <button
+                                type="button"
+                                onClick={() => setShowDistributionForm(false)}
+                                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="submit"
+                                disabled={submittingDistribution}
+                                className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all disabled:opacity-50"
+                              >
+                                {submittingDistribution ? 'Saving...' : 'Save Distribution'}
+                              </button>
+                            </div>
+                          </form>
+                        )}
+
+                        {/* Distribution List */}
+                        {distributions.length === 0 ? (
+                          <div className="text-center py-12 bg-gray-50 rounded-xl">
+                            <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                            </svg>
+                            <p className="text-lg font-medium text-gray-600">No distributions recorded yet</p>
+                            <p className="text-sm text-gray-500 mt-1">Add distribution records to track fund usage</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {distributions.map((dist) => (
+                              <div key={dist.distribution_id} className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center text-white">
+                                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                      </svg>
+                                    </div>
+                                    <div>
+                                      <p className="font-semibold text-gray-900">{dist.institution_name}</p>
+                                      <p className="text-sm text-gray-500">{dist.institution_type}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-start gap-4">
+                                    <div className="text-right">
+                                      <p className="text-xl font-bold text-amber-600">৳{formatExact(dist.distributed_amount)}</p>
+                                      <p className="text-sm text-gray-500">{new Date(dist.distribution_date).toLocaleDateString()}</p>
+                                    </div>
+                                    <button
+                                      onClick={() => handleDeleteDistribution(dist.distribution_id)}
+                                      disabled={deletingDistribution === dist.distribution_id}
+                                      className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                      title="Delete distribution"
+                                    >
+                                      {deletingDistribution === dist.distribution_id ? (
+                                        <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                                      ) : (
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+                                {dist.notes && (
+                                  <p className="mt-3 text-sm text-gray-600 bg-gray-50 rounded-lg p-3">{dist.notes}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
 
