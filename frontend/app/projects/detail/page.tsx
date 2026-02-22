@@ -48,6 +48,10 @@ function ProjectDetailContent() {
   const [contributionsByDate, setContributionsByDate] = useState<{date: string; count: number; total: number}[]>([]);
   const [contributionsByMode, setContributionsByMode] = useState<{payment_mode: string; count: number; total: number}[]>([]);
 
+  // Delete state
+  const [deletingContribution, setDeletingContribution] = useState<string | null>(null);
+  const [deletingDistribution, setDeletingDistribution] = useState<string | null>(null);
+
   useEffect(() => {
     if (isAuthenticated && projectId) {
       loadProjectData();
@@ -221,6 +225,39 @@ function ProjectDetailContent() {
   const isAssignedFundAdmin = role === 'fund_admin' && user?.assigned_projects?.includes(projectId);
   const canManageMedia = role === 'super_admin' || role === 'admin' || isAssignedFundAdmin;
   const canManageDistributions = role === 'super_admin' || role === 'admin' || isAssignedFundAdmin;
+  const canManageContributions = role === 'super_admin' || role === 'admin' || isAssignedFundAdmin;
+
+  const handleDeleteContribution = async (contributionId: string) => {
+    if (!confirm('Are you sure you want to delete this contribution? This action cannot be undone.')) return;
+
+    setDeletingContribution(contributionId);
+    try {
+      await contributionsApi.delete(contributionId);
+      setContributions(prev => prev.filter(c => c.contribution_id !== contributionId));
+      loadProjectData(); // Refresh stats
+    } catch (err) {
+      console.error('Error deleting contribution:', err);
+      alert(err instanceof Error ? err.message : 'Failed to delete contribution');
+    } finally {
+      setDeletingContribution(null);
+    }
+  };
+
+  const handleDeleteDistribution = async (distributionId: string) => {
+    if (!confirm('Are you sure you want to delete this distribution? This action cannot be undone.')) return;
+
+    setDeletingDistribution(distributionId);
+    try {
+      await distributionsApi.delete(distributionId);
+      setDistributions(prev => prev.filter(d => d.distribution_id !== distributionId));
+      loadDistributions(); // Refresh stats
+    } catch (err) {
+      console.error('Error deleting distribution:', err);
+      alert(err instanceof Error ? err.message : 'Failed to delete distribution');
+    } finally {
+      setDeletingDistribution(null);
+    }
+  };
 
   return (
     <>
@@ -620,6 +657,9 @@ function ProjectDetailContent() {
                             <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Payment</th>
                             <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Status</th>
                             <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Date</th>
+                            {canManageContributions && (
+                              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-600">Actions</th>
+                            )}
                           </tr>
                         </thead>
                         <tbody>
@@ -651,6 +691,24 @@ function ProjectDetailContent() {
                               <td className="py-4 px-4 text-gray-500">
                                 {new Date(contribution.contribution_date).toLocaleDateString()}
                               </td>
+                              {canManageContributions && (
+                                <td className="py-4 px-4 text-right">
+                                  <button
+                                    onClick={() => handleDeleteContribution(contribution.contribution_id)}
+                                    disabled={deletingContribution === contribution.contribution_id}
+                                    className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                    title="Delete contribution"
+                                  >
+                                    {deletingContribution === contribution.contribution_id ? (
+                                      <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                      </svg>
+                                    )}
+                                  </button>
+                                </td>
+                              )}
                             </tr>
                           ))}
                         </tbody>
@@ -815,9 +873,27 @@ function ProjectDetailContent() {
                                 <p className="text-sm text-gray-500">{dist.institution_type}</p>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <p className="text-xl font-bold text-amber-600">৳{formatExact(dist.distributed_amount)}</p>
-                              <p className="text-sm text-gray-500">{new Date(dist.distribution_date).toLocaleDateString()}</p>
+                            <div className="flex items-start gap-4">
+                              <div className="text-right">
+                                <p className="text-xl font-bold text-amber-600">৳{formatExact(dist.distributed_amount)}</p>
+                                <p className="text-sm text-gray-500">{new Date(dist.distribution_date).toLocaleDateString()}</p>
+                              </div>
+                              {canManageDistributions && (
+                                <button
+                                  onClick={() => handleDeleteDistribution(dist.distribution_id)}
+                                  disabled={deletingDistribution === dist.distribution_id}
+                                  className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                  title="Delete distribution"
+                                >
+                                  {deletingDistribution === dist.distribution_id ? (
+                                    <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                                  ) : (
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                  )}
+                                </button>
+                              )}
                             </div>
                           </div>
                           {dist.notes && (
