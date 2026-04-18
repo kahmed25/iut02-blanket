@@ -283,19 +283,26 @@ function ProjectDetailContent() {
                 <div>
                   <h1 className="text-2xl font-bold text-white">{project.name}</h1>
                   {project.description && (
-                    <p className="text-slate-300 mt-1 text-sm max-w-2xl">
-                      {project.description.length > 100
-                        ? `${project.description.substring(0, 100)}...`
-                        : project.description}
+                    <div className="text-slate-300 mt-1 text-sm max-w-2xl">
+                      <span>
+                        {project.description.length > 100
+                          ? `${project.description.substring(0, 100)}...`
+                          : project.description}
+                      </span>
                       {project.description.length > 100 && (
                         <button
-                          onClick={() => setActiveTab('about')}
-                          className="ml-2 text-emerald-400 hover:text-emerald-300 underline"
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setActiveTab('about');
+                          }}
+                          className="ml-2 text-emerald-400 hover:text-emerald-300 underline cursor-pointer"
                         >
                           Read more
                         </button>
                       )}
-                    </p>
+                    </div>
                   )}
                 </div>
                 <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
