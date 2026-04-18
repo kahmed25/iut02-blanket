@@ -5,14 +5,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
+  /* Primary Brand - Indigo */
+  --primary: #4f46e5;
+  --primary-light: #6366f1;
+  --primary-dark: #4338ca;
+
+  /* Accent - Teal (professional, trustworthy) */
+  --accent: #0d9488;
+  --accent-light: #14b8a6;
+  --accent-dark: #0f766e;
+
+  /* Neutrals */
   --background: #f8fafc;
-  --foreground: #1e293b;
-  --primary: #3b82f6;
-  --primary-dark: #2563eb;
-  --secondary: #8b5cf6;
-  --accent: #10b981;
-  --gradient-start: #667eea;
-  --gradient-end: #764ba2;
+  --foreground: #0f172a;
+  --muted: #64748b;
+
+  /* Status Colors */
+  --success: #059669;
+  --warning: #d97706;
+  --error: #dc2626;
+  --info: #0284c7;
 }
 
 body {
@@ -23,22 +35,21 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
 }
 
-/* Sway-like smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Professional animations */
+/* ===== ANIMATIONS ===== */
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -46,10 +57,10 @@ html {
   }
 }
 
-@keyframes slideInRight {
+@keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateX(30px);
+    transform: translateX(-10px);
   }
   to {
     opacity: 1;
@@ -57,58 +68,164 @@ html {
   }
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
 .animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out;
+  animation: fadeInUp 0.5s ease-out;
 }
 
-.animate-slide-in-right {
-  animation: slideInRight 0.6s ease-out;
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
 }
 
-/* Professional gradients */
-.gradient-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+/* ===== CARD STYLES ===== */
+.card {
+  @apply bg-white rounded-xl shadow-sm border border-gray-200/60 transition-all duration-200;
 }
 
-.gradient-secondary {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+.card:hover {
+  @apply shadow-md border-gray-300/60;
 }
 
-.gradient-accent {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+.card-elevated {
+  @apply bg-white rounded-xl shadow-md border border-gray-100;
 }
 
-.gradient-success {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+/* ===== BUTTON STYLES ===== */
+.btn-primary {
+  @apply px-5 py-2.5 bg-indigo-600 text-white font-medium rounded-lg
+         hover:bg-indigo-700 active:bg-indigo-800
+         transition-colors shadow-sm hover:shadow;
 }
 
-/* Glass morphism effect */
-.glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+.btn-secondary {
+  @apply px-5 py-2.5 bg-white text-gray-700 font-medium rounded-lg border border-gray-300
+         hover:bg-gray-50 active:bg-gray-100
+         transition-colors;
 }
 
-/* Professional shadows */
+.btn-accent {
+  @apply px-5 py-2.5 bg-teal-600 text-white font-medium rounded-lg
+         hover:bg-teal-700 active:bg-teal-800
+         transition-colors shadow-sm hover:shadow;
+}
+
+/* ===== BADGE STYLES ===== */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-success {
+  @apply bg-emerald-50 text-emerald-700 border border-emerald-200;
+}
+
+.badge-warning {
+  @apply bg-amber-50 text-amber-700 border border-amber-200;
+}
+
+.badge-info {
+  @apply bg-sky-50 text-sky-700 border border-sky-200;
+}
+
+.badge-neutral {
+  @apply bg-gray-100 text-gray-700 border border-gray-200;
+}
+
+/* ===== INPUT STYLES ===== */
+.input {
+  @apply w-full px-4 py-2.5 border border-gray-300 rounded-lg
+         focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500
+         transition-colors bg-white;
+}
+
+.input-error {
+  @apply border-red-300 bg-red-50 focus:ring-red-500/20 focus:border-red-500;
+}
+
+/* ===== STAT CARD COLORS ===== */
+.stat-indigo {
+  @apply bg-indigo-50 border-indigo-100;
+}
+.stat-indigo .stat-value {
+  @apply text-indigo-600;
+}
+.stat-indigo .stat-icon {
+  @apply bg-indigo-100 text-indigo-600;
+}
+
+.stat-teal {
+  @apply bg-teal-50 border-teal-100;
+}
+.stat-teal .stat-value {
+  @apply text-teal-600;
+}
+.stat-teal .stat-icon {
+  @apply bg-teal-100 text-teal-600;
+}
+
+.stat-amber {
+  @apply bg-amber-50 border-amber-100;
+}
+.stat-amber .stat-value {
+  @apply text-amber-600;
+}
+.stat-amber .stat-icon {
+  @apply bg-amber-100 text-amber-600;
+}
+
+.stat-sky {
+  @apply bg-sky-50 border-sky-100;
+}
+.stat-sky .stat-value {
+  @apply text-sky-600;
+}
+.stat-sky .stat-icon {
+  @apply bg-sky-100 text-sky-600;
+}
+
+/* ===== HERO SECTION ===== */
+.hero-gradient {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+}
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar {
+  @apply w-full bg-gray-100 rounded-full h-2 overflow-hidden;
+}
+
+.progress-fill {
+  @apply h-full rounded-full transition-all duration-500 bg-gradient-to-r from-teal-500 to-teal-400;
+}
+
+/* ===== SHADOWS ===== */
 .shadow-soft {
-  box-shadow: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
 }
 
-.shadow-hover {
-  transition: box-shadow 0.3s ease;
+.shadow-card {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 
-.shadow-hover:hover {
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+/* ===== GLASS EFFECT ===== */
+.glass {
+  @apply bg-white/80 backdrop-blur-md;
 }
 
+/* ===== STATUS COLORS ===== */
+.status-active {
+  @apply bg-emerald-50 text-emerald-700 border-emerald-200;
+}
+
+.status-paused {
+  @apply bg-amber-50 text-amber-700 border-amber-200;
+}
+
+.status-completed {
+  @apply bg-sky-50 text-sky-700 border-sky-200;
+}
+
+.status-cancelled {
+  @apply bg-red-50 text-red-700 border-red-200;
+}
+
+.status-archived {
+  @apply bg-gray-100 text-gray-600 border-gray-200;
+}

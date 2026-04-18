@@ -150,7 +150,7 @@ export function Navigation() {
           {/* Logo and Desktop Nav */}
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/" className="text-xl font-bold bg-gradient-to-r from-slate-800 to-emerald-600 bg-clip-text text-transparent">
+              <Link href="/" className="text-xl font-bold text-indigo-600">
                 IUT02 Care
               </Link>
             </div>
@@ -165,11 +165,11 @@ export function Navigation() {
                     href={item.href}
                     className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                       isActive
-                        ? 'bg-emerald-50 text-emerald-700'
+                        ? 'bg-indigo-50 text-indigo-700'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                   >
-                    <span className={`mr-2 ${isActive ? 'text-emerald-600' : 'text-gray-400'}`}>
+                    <span className={`mr-2 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`}>
                       {item.icon}
                     </span>
                     {item.label}
@@ -186,11 +186,11 @@ export function Navigation() {
               href="/help"
               className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                 pathname === '/help' || pathname.startsWith('/help/')
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : 'text-gray-600 hover:bg-emerald-50 hover:text-emerald-700'
+                  ? 'bg-indigo-50 text-indigo-700'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`}
             >
-              <svg className={`w-5 h-5 mr-1.5 ${pathname === '/help' || pathname.startsWith('/help/') ? 'text-emerald-600' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className={`w-5 h-5 mr-1.5 ${pathname === '/help' || pathname.startsWith('/help/') ? 'text-indigo-600' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Help
@@ -281,7 +281,7 @@ export function Navigation() {
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
+                <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
                   {(user?.username || user?.email || 'U').charAt(0).toUpperCase()}
                 </div>
                 <div className="text-left hidden lg:block">
@@ -423,7 +423,7 @@ export function Navigation() {
             <div className="pt-4 pb-3 border-t border-gray-200 px-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-white font-medium">
+                  <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-medium">
                     {(user?.username || user?.email || 'U').charAt(0).toUpperCase()}
                   </div>
                   <div className="ml-3">
