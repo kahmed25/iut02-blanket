@@ -27,7 +27,7 @@ function ProjectDetailContent() {
   const [error, setError] = useState<string | null>(null);
   const [showUploader, setShowUploader] = useState(false);
   const [mediaRefreshKey, setMediaRefreshKey] = useState(0);
-  const [activeTab, setActiveTab] = useState<'overview' | 'contributions' | 'distribution' | 'media' | 'team'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'about' | 'contributions' | 'distribution' | 'media' | 'team'>('overview');
   
   // Distribution state
   const [distributions, setDistributions] = useState<Distribution[]>([]);
@@ -283,7 +283,19 @@ function ProjectDetailContent() {
                 <div>
                   <h1 className="text-2xl font-bold text-white">{project.name}</h1>
                   {project.description && (
-                    <p className="text-slate-300 mt-1 text-sm max-w-2xl">{project.description}</p>
+                    <p className="text-slate-300 mt-1 text-sm max-w-2xl">
+                      {project.description.length > 100
+                        ? `${project.description.substring(0, 100)}...`
+                        : project.description}
+                      {project.description.length > 100 && (
+                        <button
+                          onClick={() => setActiveTab('about')}
+                          className="ml-2 text-emerald-400 hover:text-emerald-300 underline"
+                        >
+                          Read more
+                        </button>
+                      )}
+                    </p>
                   )}
                 </div>
                 <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
@@ -334,6 +346,11 @@ function ProjectDetailContent() {
                   { id: 'overview', label: 'Overview', icon: (
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  )},
+                  { id: 'about', label: 'About', icon: (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   )},
                   { id: 'contributions', label: 'Contributions', icon: (
@@ -625,6 +642,142 @@ function ProjectDetailContent() {
                     ) : (
                       <p className="text-gray-400 text-center py-8">No distributions yet</p>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {/* About Tab */}
+              {activeTab === 'about' && (
+                <div className="space-y-6">
+                  {/* Main Description Card */}
+                  <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl border border-slate-200 overflow-hidden">
+                    <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-4">
+                      <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        About This Campaign
+                      </h2>
+                    </div>
+                    <div className="p-6">
+                      {project.description ? (
+                        <div className="prose prose-slate max-w-none">
+                          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-base">
+                            {project.description}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-gray-400 italic">No description provided for this project.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Quick Info Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Project Status */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          project.status === 'active' ? 'bg-emerald-100' :
+                          project.status === 'completed' ? 'bg-blue-100' :
+                          project.status === 'paused' ? 'bg-yellow-100' : 'bg-gray-100'
+                        }`}>
+                          <svg className={`w-5 h-5 ${
+                            project.status === 'active' ? 'text-emerald-600' :
+                            project.status === 'completed' ? 'text-blue-600' :
+                            project.status === 'paused' ? 'text-yellow-600' : 'text-gray-600'
+                          }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {project.status === 'active' ? (
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            ) : project.status === 'completed' ? (
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            ) : (
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            )}
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Campaign Status</p>
+                          <p className={`font-semibold ${
+                            project.status === 'active' ? 'text-emerald-600' :
+                            project.status === 'completed' ? 'text-blue-600' :
+                            project.status === 'paused' ? 'text-yellow-600' : 'text-gray-600'
+                          }`}>
+                            {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Created Date */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                          <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Campaign Started</p>
+                          <p className="font-semibold text-gray-900">
+                            {new Date(project.created_at).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Progress Summary */}
+                  <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 rounded-2xl p-6 text-white">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      Campaign Progress
+                    </h3>
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                      <div className="text-center">
+                        <p className="text-3xl font-bold text-emerald-400">৳{formatExact(stats?.total_raised || 0)}</p>
+                        <p className="text-slate-400 text-sm mt-1">Raised</p>
+                      </div>
+                      <div className="text-center border-x border-slate-700">
+                        <p className="text-3xl font-bold text-white">৳{formatExact(project.target_amount)}</p>
+                        <p className="text-slate-400 text-sm mt-1">Goal</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-3xl font-bold text-cyan-400">{progress.toFixed(0)}%</p>
+                        <p className="text-slate-400 text-sm mt-1">Complete</p>
+                      </div>
+                    </div>
+                    <div className="w-full bg-slate-700 rounded-full h-3">
+                      <div
+                        className="bg-gradient-to-r from-emerald-500 to-emerald-400 h-3 rounded-full transition-all duration-500"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Call to Action */}
+                  <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl border border-emerald-200 p-6 text-center">
+                    <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-bold text-emerald-900 mb-2">Every Contribution Counts</h3>
+                    <p className="text-emerald-700 mb-4">
+                      Join {stats?.unique_contributors || 0} others who have already contributed to this cause.
+                    </p>
+                    <button
+                      onClick={() => setActiveTab('contributions')}
+                      className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-colors"
+                    >
+                      View All Contributions
+                    </button>
                   </div>
                 </div>
               )}
