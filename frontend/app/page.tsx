@@ -321,7 +321,7 @@ export default function Home() {
               )}
             </div>
 
-            {/* Projects Grid */}
+            {/* Projects Display */}
             {projects.length === 0 ? (
               <div className="card p-12 text-center">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -336,36 +336,113 @@ export default function Home() {
                 </button>
               </div>
             ) : (
-              <div className="space-y-10">
+              <div className="space-y-8">
+                {/* Featured Active Project */}
                 {(() => {
-                  const statusOrder = ['active', 'paused', 'completed', 'cancelled', 'archived'];
-                  const statusConfig: Record<string, { dotColor: string; labelColor: string; label: string }> = {
-                    active: { dotColor: 'bg-emerald-500', labelColor: 'text-emerald-700', label: 'Active Projects' },
-                    paused: { dotColor: 'bg-amber-500', labelColor: 'text-amber-700', label: 'Paused Projects' },
-                    completed: { dotColor: 'bg-sky-500', labelColor: 'text-sky-700', label: 'Completed Projects' },
-                    cancelled: { dotColor: 'bg-red-500', labelColor: 'text-red-700', label: 'Cancelled Projects' },
-                    archived: { dotColor: 'bg-gray-400', labelColor: 'text-gray-600', label: 'Archived Projects' },
-                  };
+                  const activeProjects = projects.filter(p => p.status === 'active');
+                  const featuredProject = activeProjects[0];
+                  if (!featuredProject) return null;
 
-                  const groupedProjects = statusOrder.reduce((acc, status) => {
-                    const projectsInStatus = projects.filter(p => p.status === status);
-                    if (projectsInStatus.length > 0) {
-                      acc[status] = projectsInStatus;
-                    }
-                    return acc;
-                  }, {} as Record<string, typeof projects>);
+                  const stats = projectStats[featuredProject.project_id];
+                  const progress = featuredProject.target_amount > 0
+                    ? Math.min(100, ((stats?.total_raised || 0) / featuredProject.target_amount) * 100)
+                    : 0;
 
-                  return Object.entries(groupedProjects).map(([status, statusProjects]) => (
-                    <div key={status}>
-                      <div className="flex items-center gap-3 mb-5">
-                        <span className={`w-2.5 h-2.5 rounded-full ${statusConfig[status]?.dotColor}`} />
-                        <h3 className={`text-lg font-semibold ${statusConfig[status]?.labelColor}`}>
-                          {statusConfig[status]?.label} ({statusProjects.length})
-                        </h3>
+                  return (
+                    <div
+                      onClick={() => router.push(`/projects/detail?id=${featuredProject.project_id}`)}
+                      className="relative bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden cursor-pointer group hover:shadow-xl transition-shadow"
+                    >
+                      <div className="absolute top-4 left-4">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-teal-500 text-white">
+                          <span className="w-1.5 h-1.5 bg-white rounded-full mr-2 animate-pulse"></span>
+                          Active Campaign
+                        </span>
                       </div>
+                      <div className="grid md:grid-cols-2">
+                        {/* Left - Info */}
+                        <div className="p-8 pt-14">
+                          <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors">
+                            {featuredProject.name}
+                          </h3>
+                          {featuredProject.description && (
+                            <p className="text-gray-600 mb-6 line-clamp-3">{featuredProject.description}</p>
+                          )}
+                          <div className="flex items-center gap-6 text-sm text-gray-500 mb-6">
+                            <div className="flex items-center">
+                              <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                              </svg>
+                              {stats?.unique_contributors || 0} contributors
+                            </div>
+                            <div className="flex items-center">
+                              <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              {stats?.total_contributions || 0} donations
+                            </div>
+                          </div>
+                          <button className="btn-primary">
+                            View Campaign
+                            <svg className="w-4 h-4 ml-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                          </button>
+                        </div>
+                        {/* Right - Stats */}
+                        <div className="bg-gray-50 p-8 flex flex-col justify-center">
+                          <div className="space-y-6">
+                            <div>
+                              <div className="flex justify-between mb-2">
+                                <span className="text-sm font-medium text-gray-600">{progress.toFixed(0)}% Complete</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div className="bg-teal-500 h-3 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="bg-white rounded-xl p-4 text-center shadow-sm">
+                                <p className="text-2xl font-bold text-teal-600">৳{formatExact(stats?.total_raised || 0)}</p>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">Raised</p>
+                              </div>
+                              <div className="bg-white rounded-xl p-4 text-center shadow-sm">
+                                <p className="text-2xl font-bold text-gray-900">৳{formatExact(featuredProject.target_amount)}</p>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">Goal</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
+                {/* All Projects Grid */}
+                {(() => {
+                  // Sort: active first, then by creation date
+                  const sortedProjects = [...projects].sort((a, b) => {
+                    const statusOrder: Record<string, number> = { active: 0, paused: 1, completed: 2, cancelled: 3, archived: 4 };
+                    if (statusOrder[a.status] !== statusOrder[b.status]) {
+                      return statusOrder[a.status] - statusOrder[b.status];
+                    }
+                    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                  });
+
+                  // Skip first active project if it's featured
+                  const activeProjects = projects.filter(p => p.status === 'active');
+                  const displayProjects = activeProjects.length > 0
+                    ? sortedProjects.filter(p => p.project_id !== activeProjects[0].project_id)
+                    : sortedProjects;
+
+                  if (displayProjects.length === 0) return null;
+
+                  return (
+                    <>
+                      <h3 className="text-lg font-semibold text-gray-700 mt-4">
+                        {activeProjects.length > 0 ? 'More Projects' : 'All Projects'}
+                      </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {statusProjects.map((project) => {
+                        {displayProjects.map((project) => {
                           const stats = projectStats[project.project_id];
                           const progress = project.target_amount > 0
                             ? Math.min(100, ((stats?.total_raised || 0) / project.target_amount) * 100)
@@ -375,79 +452,50 @@ export default function Home() {
                             <div
                               key={project.project_id}
                               onClick={() => router.push(`/projects/detail?id=${project.project_id}`)}
-                              className="card overflow-hidden cursor-pointer group"
+                              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden cursor-pointer group hover:shadow-md hover:border-gray-300 transition-all"
                             >
-                              {/* Status bar */}
-                              <div className={`h-1 ${
-                                status === 'active' ? 'bg-emerald-500' :
-                                status === 'paused' ? 'bg-amber-500' :
-                                status === 'completed' ? 'bg-sky-500' :
-                                status === 'cancelled' ? 'bg-red-500' : 'bg-gray-400'
-                              }`}></div>
-
-                              <div className="p-6">
-                                <div className="flex items-start justify-between mb-4">
-                                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                              <div className="p-5">
+                                {/* Header */}
+                                <div className="flex items-start justify-between mb-3">
+                                  <h4 className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-1 flex-1">
                                     {project.name}
-                                  </h3>
-                                  <span className={`badge ml-2 ${
-                                    status === 'active' ? 'badge-success' :
-                                    status === 'paused' ? 'badge-warning' :
-                                    status === 'completed' ? 'badge-info' : 'badge-neutral'
+                                  </h4>
+                                  <span className={`ml-2 px-2 py-0.5 text-xs font-medium rounded-full ${
+                                    project.status === 'active' ? 'bg-teal-50 text-teal-700' :
+                                    project.status === 'paused' ? 'bg-amber-50 text-amber-700' :
+                                    project.status === 'completed' ? 'bg-sky-50 text-sky-700' :
+                                    'bg-gray-100 text-gray-600'
                                   }`}>
                                     {project.status}
                                   </span>
                                 </div>
 
-                                {project.description && (
-                                  <p className="text-sm text-gray-500 mb-4 line-clamp-2">{project.description}</p>
-                                )}
-
                                 {/* Progress */}
                                 <div className="mb-4">
-                                  <div className="flex justify-between text-sm mb-2">
-                                    <span className="font-medium text-gray-700">{progress.toFixed(0)}% funded</span>
-                                    <span className="text-gray-500">{stats?.total_contributions || 0} donations</span>
+                                  <div className="w-full bg-gray-100 rounded-full h-1.5 mb-2">
+                                    <div
+                                      className={`h-1.5 rounded-full ${
+                                        project.status === 'active' ? 'bg-teal-500' :
+                                        project.status === 'completed' ? 'bg-sky-500' : 'bg-gray-400'
+                                      }`}
+                                      style={{ width: `${progress}%` }}
+                                    />
                                   </div>
-                                  <div className="progress-bar">
-                                    <div className="progress-fill" style={{ width: `${progress}%` }} />
-                                  </div>
+                                  <p className="text-xs text-gray-500">{progress.toFixed(0)}% of ৳{formatExact(project.target_amount)}</p>
                                 </div>
 
-                                {/* Stats */}
-                                <div className="flex items-end justify-between pt-4 border-t border-gray-100">
-                                  <div>
-                                    <p className="text-xs text-gray-500 uppercase tracking-wide">Raised</p>
-                                    <p className="text-xl font-bold text-teal-600">৳{formatExact(stats?.total_raised || 0)}</p>
-                                  </div>
-                                  <div className="text-right">
-                                    <p className="text-xs text-gray-500 uppercase tracking-wide">Goal</p>
-                                    <p className="text-xl font-bold text-gray-900">৳{formatExact(project.target_amount)}</p>
-                                  </div>
-                                </div>
-
-                                {/* Footer */}
-                                <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                                  <div className="flex items-center text-sm text-gray-500">
-                                    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                    </svg>
-                                    {stats?.unique_contributors || 0}
-                                  </div>
-                                  <span className="text-sm font-medium text-indigo-600 group-hover:translate-x-0.5 transition-transform flex items-center">
-                                    View
-                                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                  </span>
+                                {/* Stats Row */}
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="font-semibold text-teal-600">৳{formatExact(stats?.total_raised || 0)}</span>
+                                  <span className="text-gray-500">{stats?.unique_contributors || 0} donors</span>
                                 </div>
                               </div>
                             </div>
                           );
                         })}
                       </div>
-                    </div>
-                  ));
+                    </>
+                  );
                 })()}
               </div>
             )}
