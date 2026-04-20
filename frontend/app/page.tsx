@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { fetchExcelData, fetchImages, ExcelData, ImageList } from '@/services/api';
-import { settingsApi, projectsApi, statsApi, contributionsApi, Project, ProjectStats, Contribution } from '@/services/fundApi';
+import { settingsApi, projectsApi, statsApi, contributionsApi, distributionsApi, Project, ProjectStats, Contribution } from '@/services/fundApi';
 import DataTable from '@/components/DataTable';
 import SummaryCard from '@/components/SummaryCard';
 import ImageGallery from '@/components/ImageGallery';
@@ -27,6 +27,8 @@ export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectStats, setProjectStats] = useState<Record<string, ProjectStats>>({});
   const [recentContributions, setRecentContributions] = useState<Contribution[]>([]);
+  const [totalDistributed, setTotalDistributed] = useState<number>(0);
+  const [projectFilter, setProjectFilter] = useState<'active' | 'completed'>('active');
 
   // Redirect to login if not authenticated (after loading)
   useEffect(() => {
@@ -105,26 +107,32 @@ export default function Home() {
       // Load all projects
       const projectsData = await projectsApi.getAll();
       setProjects(projectsData);
-      
+
       // Load stats for each project
       const statsMap: Record<string, ProjectStats> = {};
       const allContributions: Contribution[] = [];
-      
+      let distributedTotal = 0;
+
       for (const project of projectsData) {
         try {
           const response = await statsApi.getProjectStats(project.project_id);
           statsMap[project.project_id] = response;
-          
+
           // Get contributions for this project
           const contributions = await contributionsApi.getAll(project.project_id);
           allContributions.push(...contributions);
+
+          // Get distribution stats for this project
+          const distStats = await distributionsApi.getStats(project.project_id);
+          distributedTotal += distStats.total_distributed || 0;
         } catch (err) {
           console.error(`Error loading stats for project ${project.project_id}:`, err);
         }
       }
-      
+
       setProjectStats(statsMap);
-      
+      setTotalDistributed(distributedTotal);
+
       // Sort contributions by date (most recent first) and take top 5
       const sortedContributions = allContributions
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -202,6 +210,7 @@ export default function Home() {
   const totalRaised = Object.values(projectStats).reduce((sum, stats) => sum + (stats?.total_raised || 0), 0);
   const totalContributors = Object.values(projectStats).reduce((sum, stats) => sum + (stats?.unique_contributors || 0), 0);
   const activeProjectsCount = projects.filter(p => p.status === 'active').length;
+  const completedProjectsCount = projects.filter(p => p.status === 'completed').length;
 
   // Dynamic mode - show projects listing
   if (dataSourceMode === 'dynamic') {
@@ -233,18 +242,26 @@ export default function Home() {
                 </p>
 
                 {/* Stats Row */}
-                <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl px-6 py-4 border border-white/10 min-w-[140px]">
-                    <p className="text-3xl sm:text-4xl font-bold text-white">৳{formatExact(totalRaised)}</p>
-                    <p className="text-indigo-300 text-sm mt-1">Total Raised</p>
+                <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/10 min-w-[120px]">
+                    <p className="text-2xl sm:text-3xl font-bold text-white">৳{formatExact(totalRaised)}</p>
+                    <p className="text-indigo-300 text-xs mt-1">Total Raised</p>
                   </div>
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl px-6 py-4 border border-white/10 min-w-[140px]">
-                    <p className="text-3xl sm:text-4xl font-bold text-white">{totalContributors}</p>
-                    <p className="text-indigo-300 text-sm mt-1">Contributors</p>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/10 min-w-[120px]">
+                    <p className="text-2xl sm:text-3xl font-bold text-amber-300">৳{formatExact(totalDistributed)}</p>
+                    <p className="text-indigo-300 text-xs mt-1">Distributed</p>
                   </div>
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl px-6 py-4 border border-white/10 min-w-[140px]">
-                    <p className="text-3xl sm:text-4xl font-bold text-teal-300">{activeProjectsCount}</p>
-                    <p className="text-indigo-300 text-sm mt-1">Active Projects</p>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/10 min-w-[120px]">
+                    <p className="text-2xl sm:text-3xl font-bold text-white">{totalContributors}</p>
+                    <p className="text-indigo-300 text-xs mt-1">Contributors</p>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/10 min-w-[120px]">
+                    <p className="text-2xl sm:text-3xl font-bold text-teal-300">{activeProjectsCount}</p>
+                    <p className="text-indigo-300 text-xs mt-1">Active Projects</p>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/10 min-w-[120px]">
+                    <p className="text-2xl sm:text-3xl font-bold text-sky-300">{completedProjectsCount}</p>
+                    <p className="text-indigo-300 text-xs mt-1">Completed</p>
                   </div>
                 </div>
               </div>
@@ -311,14 +328,34 @@ export default function Home() {
             </div>
 
             {/* Projects Section Header */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Our Projects</h2>
                 <p className="text-gray-500 mt-1">Click on a project to see details</p>
               </div>
-              {projects.length > 0 && (
-                <span className="badge badge-success">{projects.length} Projects</span>
-              )}
+              {/* Project Filter Tabs */}
+              <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+                <button
+                  onClick={() => setProjectFilter('active')}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                    projectFilter === 'active'
+                      ? 'bg-white text-teal-700 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Active ({activeProjectsCount})
+                </button>
+                <button
+                  onClick={() => setProjectFilter('completed')}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                    projectFilter === 'completed'
+                      ? 'bg-white text-sky-700 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Completed ({completedProjectsCount})
+                </button>
+              </div>
             </div>
 
             {/* Projects Display */}
@@ -337,8 +374,8 @@ export default function Home() {
               </div>
             ) : (
               <div className="space-y-8">
-                {/* Featured Active Project */}
-                {(() => {
+                {/* Featured Active Project - only show on active tab */}
+                {projectFilter === 'active' && (() => {
                   const activeProjects = projects.filter(p => p.status === 'active');
                   const featuredProject = activeProjects[0];
                   if (!featuredProject) return null;
@@ -417,30 +454,43 @@ export default function Home() {
                   );
                 })()}
 
-                {/* All Projects Grid */}
+                {/* Filtered Projects Grid */}
                 {(() => {
-                  // Sort: active first, then by creation date
-                  const sortedProjects = [...projects].sort((a, b) => {
-                    const statusOrder: Record<string, number> = { active: 0, paused: 1, completed: 2, cancelled: 3, archived: 4 };
-                    if (statusOrder[a.status] !== statusOrder[b.status]) {
-                      return statusOrder[a.status] - statusOrder[b.status];
-                    }
-                    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-                  });
+                  // Filter projects based on selected tab
+                  const filteredProjects = projects.filter(p => p.status === projectFilter);
 
-                  // Skip first active project if it's featured
+                  // For active tab, skip the featured project (first one)
                   const activeProjects = projects.filter(p => p.status === 'active');
-                  const displayProjects = activeProjects.length > 0
-                    ? sortedProjects.filter(p => p.project_id !== activeProjects[0].project_id)
-                    : sortedProjects;
+                  const displayProjects = projectFilter === 'active' && activeProjects.length > 0
+                    ? filteredProjects.filter(p => p.project_id !== activeProjects[0].project_id)
+                    : filteredProjects;
+
+                  // Sort by creation date (newest first)
+                  displayProjects.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+                  if (filteredProjects.length === 0) {
+                    return (
+                      <div className="text-center py-12">
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                          </svg>
+                        </div>
+                        <p className="text-gray-500">No {projectFilter} projects</p>
+                      </div>
+                    );
+                  }
 
                   if (displayProjects.length === 0) return null;
 
                   return (
                     <>
-                      <h3 className="text-lg font-semibold text-gray-700 mt-4">
-                        {activeProjects.length > 0 ? 'More Projects' : 'All Projects'}
-                      </h3>
+                      {projectFilter === 'active' && activeProjects.length > 1 && (
+                        <h3 className="text-lg font-semibold text-gray-700 mt-4">More Active Projects</h3>
+                      )}
+                      {projectFilter === 'completed' && (
+                        <h3 className="text-lg font-semibold text-gray-700">Completed Projects</h3>
+                      )}
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {displayProjects.map((project) => {
                           const stats = projectStats[project.project_id];
